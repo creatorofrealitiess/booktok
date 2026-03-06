@@ -170,10 +170,23 @@ function App() {
   function handleConnect() {
     setConfigError("");
     try {
-      const config = JSON.parse(configInput);
       if (!passInput.trim()) { setConfigError("Enter a passphrase."); return; }
+      let raw = configInput.trim();
+      raw = raw.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+      raw = raw.replace(/^.*import\s.*$/gm, "");
+      raw = raw.replace(/^.*const\s+\w+\s*=\s*/gm, "");
+      raw = raw.replace(/^.*initializeApp.*$/gm, "");
+      raw = raw.replace(/;\s*$/gm, "");
+      raw = raw.replace(/[\u2018\u2019\u201A\u201B]/g, "'").replace(/[\u201C\u201D\u201E\u201F]/g, '"');
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) throw "no object";
+      let jsonStr = match[0];
+      jsonStr = jsonStr.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
+      jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
+      const config = JSON.parse(jsonStr);
+      if (!config.apiKey) throw "missing apiKey";
       initFirebase(config, passInput.trim());
-    } catch { setConfigError("Invalid JSON. Paste your Firebase config object."); }
+    } catch(e) { setConfigError("Invalid config. Paste the Firebase config object (or the full code block)."); }
   }
 
   function handleDisconnect() {
@@ -203,7 +216,7 @@ function App() {
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
               <div className="label" style={{ marginBottom: "6px" }}>Firebase Config (JSON)</div>
-              <textarea value={configInput} onChange={e => setConfigInput(e.target.value)} placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","databaseURL":"..."}' className="input" style={{ height: "120px", resize: "vertical", fontSize: "11px", fontFamily: "var(--mono)" }} />
+              <textarea value={configInput} onChange={e => setConfigInput(e.target.value)} placeholder='Paste the full code block from Firebase — or just the {apiKey:...} object' className="input" style={{ height: "120px", resize: "vertical", fontSize: "11px", fontFamily: "var(--mono)" }} />
             </div>
             <div>
               <div className="label" style={{ marginBottom: "6px" }}>Passphrase <span style={{ textTransform: "none", color: "var(--text4)" }}>(this is your user ID — same on all devices)</span></div>
