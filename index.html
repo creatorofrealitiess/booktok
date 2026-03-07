@@ -171,8 +171,18 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .task-modal-save{background:var(--accent);color:var(--txtW)}
 .task-modal-save:hover{background:var(--accent-h)}
 /* Tap zone */
-.task-tap-zone{padding:10px;text-align:center;cursor:pointer;color:var(--txt3);font-size:.72rem;border-radius:var(--r-s);transition:var(--tr)}
-.task-tap-zone:hover{background:var(--bg-hover);color:var(--txt2)}
+.task-tap-zone{display:none}
+/* Task header add btn */
+.task-hd-add{padding:8px 16px;border-radius:20px;background:var(--accent);color:var(--txtW);border:none;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.task-hd-add:hover{background:var(--accent-h)}
+/* Date sub-header in tasks */
+.task-date-hd{padding:6px 14px;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);background:var(--bg);border-top:1px solid var(--border-lt)}
+.task-date-hd.overdue-hd{color:#dc3545}
+.task-date-hd.today-hd{color:var(--ready)}
+/* Task calendar */
+.tcal-day-tasks{display:flex;flex-direction:column;gap:1px}
+.tcal-item{font-size:.58rem;padding:2px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;font-weight:500}
+.tcal-item.tcal-done{opacity:.4;text-decoration:line-through}
 .task-sub-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
 .task-sub-body.open{max-height:2000px}
 /* Task items */
@@ -307,6 +317,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   <div class="page active" id="pgAcc"></div>
   <div class="page" id="pgCal"></div>
   <div class="page" id="pgTask"></div>
+  <div class="page" id="pgTaskCal"></div>
   <div class="page" id="pgAuth"></div>
   <div class="ed-page" id="pgEdit"></div>
   <button class="fab" id="fab" onclick="newPost()">+</button>
@@ -314,6 +325,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
     <div class="tab-i active" onclick="swTab('accounts')"><div class="tab-ic">&#128100;</div><div class="tab-lb">Accounts</div></div>
     <div class="tab-i" onclick="swTab('calendar')"><div class="tab-ic">&#128197;</div><div class="tab-lb">Calendar</div></div>
     <div class="tab-i" onclick="swTab('tasks')"><div class="tab-ic">&#9745;</div><div class="tab-lb">Tasks</div></div>
+    <div class="tab-i" onclick="swTab('taskcal')"><div class="tab-ic">&#128198;</div><div class="tab-lb">Planner</div></div>
   </div>
 </div>
 
@@ -356,13 +368,13 @@ firebase.initializeApp({apiKey:"AIzaSyDMsL5kyKDSVakihwvgrgtOqFlVObDehpw",authDom
 const au=firebase.auth(),db=firebase.database();
 
 const AUTHORS=[
-  {id:'lysbookish',handle:'@lysbookish',init:'LB',project:'RE',name:'Lys'},
   {id:'vedarosebooks',handle:'@vedarosebooks',init:'VR',project:'RE',name:'Veda'},
-  {id:'lexiasherbooks',handle:'@lexiasherbooks',init:'LA',project:'RE',name:'Lexi'},
-  {id:'zaralibrary',handle:'@zaralibrary',init:'ZL',project:'DK',name:'Zara'},
-  {id:'lilablairbooks',handle:'@lilablairbooks',init:'LB',project:'DK',name:'Lila'},
+  {id:'lilablairbooks',handle:'@lilablairbooks',init:'LB',project:'RE',name:'Lila'},
+  {id:'zaralibrary',handle:'@zaralibrary',init:'ZL',project:'RE',name:'Zara'},
+  {id:'livravenbooks',handle:'@livravenbooks',init:'LR',project:'RE',name:'Liv'},
+  {id:'lysbookish',handle:'@lysbookish',init:'LK',project:'DK',name:'Lys'},
+  {id:'lexiasherbooks',handle:'@lexiasherbooks',init:'LA',project:'DK',name:'Lexi'},
   {id:'larahartbooks',handle:'@larahartbooks',init:'LH',project:'PV',name:'Lara'},
-  {id:'livravenbooks',handle:'@livravenbooks',init:'LR',project:'PV',name:'Liv'},
 ];
 const PROJ={RE:{name:'Project RE',color:'#e85d3a'},DK:{name:'Project DK',color:'#6366f1'},PV:{name:'Project PV',color:'#d946a8'}};
 const HTAGS=['#arrangedmarriage','#agegapromance','#enemiestolovers','#stalkerromance','#hockeyromance','#sportsromance','#mafiaromance','#billionaireromance','#brothersbestfriend','#enemiestoloversrecs','#bratvaromance','#forcedproximitybookrecs','#grumpysunshineromance','#bookboyfriend','#booktokbooks','#booktok','#bookish','#bookrecommendations','#booklover','#bookworm','#darkromance','#spicybooks','#romancebooks','#booktokfyp','#bookseries','#mustread','#bookobsessed','#morallygrey','#possessivehero','#forcedproximity','#bookstoread','#5starread','#bookclub','#fantasyromance','#romantasy'];
@@ -380,7 +392,7 @@ function signOut(){au.signOut()}
 function loadAll(){if(!user)return;db.ref(`users/${user.uid}/posts`).on('value',s=>{allPosts=s.val()||{};if(curTab==='calendar')renderCal();if(curTab==='accounts')renderAcc();if(curAuthor)renderAuthorPosts()});db.ref(`users/${user.uid}/profilePics`).on('value',s=>{profilePics=s.val()||{};if(curTab==='accounts')renderAcc()});loadTasks()}
 
 // TABS
-function swTab(t){curTab=t;curAuthor=null;curPostId=null;navStack=[];document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-i').forEach((x,i)=>x.classList.toggle('active',['accounts','calendar','tasks'][i]===t));document.getElementById('navBack').style.display='none';document.getElementById('navBrand').style.display='block';document.getElementById('navTitle').style.display='none';document.getElementById('fab').classList.remove('show');document.getElementById('btabs').style.display='flex';if(t==='accounts'){document.getElementById('pgAcc').classList.add('active');renderAcc()}else if(t==='calendar'){document.getElementById('pgCal').classList.add('active');renderCal()}else if(t==='tasks'){document.getElementById('pgTask').classList.add('active');renderTasks()}}
+function swTab(t){curTab=t;curAuthor=null;curPostId=null;navStack=[];document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-i').forEach((x,i)=>x.classList.toggle('active',['accounts','calendar','tasks','taskcal'][i]===t));document.getElementById('navBack').style.display='none';document.getElementById('navBrand').style.display='block';document.getElementById('navTitle').style.display='none';document.getElementById('fab').classList.remove('show');document.getElementById('btabs').style.display='flex';if(t==='accounts'){document.getElementById('pgAcc').classList.add('active');renderAcc()}else if(t==='calendar'){document.getElementById('pgCal').classList.add('active');renderCal()}else if(t==='tasks'){document.getElementById('pgTask').classList.add('active');renderTasks()}else if(t==='taskcal'){document.getElementById('pgTaskCal').classList.add('active');renderTaskCal()}}
 
 function showAuth2(aid){curAuthor=AUTHORS.find(a=>a.id===aid);curFilter='all';navStack.push('author');document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.getElementById('pgAuth').classList.add('active');document.getElementById('navBack').style.display='flex';document.getElementById('navBrand').style.display='none';document.getElementById('navTitle').style.display='block';document.getElementById('navTitle').textContent=curAuthor.name;document.getElementById('fab').classList.add('show');renderAuthView()}
 
@@ -414,24 +426,53 @@ function setCF(f){calFilt=f;renderCal()}
 
 // TASKS
 let tasks=[];
-function loadTasks(){if(!user)return;db.ref(`users/${user.uid}/tasks2`).on('value',s=>{tasks=Object.entries(s.val()||{}).map(([id,t])=>({id,...t}));if(curTab==='tasks')renderTasks()})}
+function loadTasks(){if(!user)return;db.ref(`users/${user.uid}/tasks2`).on('value',s=>{tasks=Object.entries(s.val()||{}).map(([id,t])=>({id,...t}));if(curTab==='tasks')renderTasks();if(curTab==='taskcal')renderTaskCal()})}
 
 function renderTasks(){const el=document.getElementById('pgTask');const todayStr=new Date().toISOString().split('T')[0];
-// Initialize open states on first render (default: cats open, subs closed)
 TASK_CATS.forEach(cat=>{if(openCats[cat]===undefined)openCats[cat]=true;PROJ_KEYS.forEach(pk=>{const k=cat+'-'+pk;if(openSubs[k]===undefined)openSubs[k]=false})});
-let h=`<div class="sec-hd"><div><div class="sec-t">Tasks</div><div class="sec-st">${tasks.filter(t=>!t.done).length} pending</div></div></div>`;
+let h=`<div class="sec-hd"><div><div class="sec-t">Tasks</div><div class="sec-st">${tasks.filter(t=>!t.done).length} pending</div></div><button class="task-hd-add" onclick="openTaskModal()">+ Add Task</button></div>`;
 
 TASK_CATS.forEach(cat=>{const catTasks=tasks.filter(t=>t.category===cat);const pending=catTasks.filter(t=>!t.done);const done=catTasks.filter(t=>t.done);const catOpen=openCats[cat];
 h+=`<div class="task-cat"><div class="task-cat-hd ${catOpen?'open':''}" onclick="togCat2('${cat}',this)"><div class="task-cat-title">${cat} <span class="task-cat-count">${pending.length}</span></div><div class="task-cat-arr">&#9660;</div></div><div class="task-cat-body ${catOpen?'open':''}">`;
 
-PROJ_KEYS.forEach(pk=>{const subTasks=pending.filter(t=>t.project===pk);const subKey=cat+'-'+pk;const subOpen=openSubs[subKey];
+PROJ_KEYS.forEach(pk=>{const subTasks=pending.filter(t=>t.project===pk).sort((a,b)=>{if(!a.dueDate&&!b.dueDate)return 0;if(!a.dueDate)return 1;if(!b.dueDate)return-1;return a.dueDate.localeCompare(b.dueDate)});
+const subKey=cat+'-'+pk;const subOpen=openSubs[subKey];
 h+=`<div class="task-sub"><div class="task-sub-hd ${subOpen?'open':''} proj-${pk.toLowerCase()}" onclick="togSub2('${subKey}',this)"><div class="task-sub-dot" style="background:${PROJ[pk].color}"></div><div class="task-sub-nm">${PROJ[pk].name}</div><span class="task-sub-arr">&#9660;</span></div><div class="task-sub-body ${subOpen?'open':''}">`;
-subTasks.forEach(t=>{const dueClass=t.dueDate?(t.dueDate<todayStr?'overdue':t.dueDate===todayStr?'today-due':'future'):'';h+=taskItemH(t,dueClass)});
-h+=`<div class="task-tap-zone" onclick="openTaskModal('${cat}','${pk}')">+ tap to add</div></div></div>`});
+// Group by date
+let lastDate='';
+subTasks.forEach(t=>{const dueClass=t.dueDate?(t.dueDate<todayStr?'overdue':t.dueDate===todayStr?'today-due':'future'):'';
+const dateLabel=t.dueDate||'No date';
+if(dateLabel!==lastDate){const hdClass=t.dueDate?(t.dueDate<todayStr?'overdue-hd':t.dueDate===todayStr?'today-hd':''):'';
+const displayDate=t.dueDate?(t.dueDate===todayStr?'Today':t.dueDate<todayStr?'Overdue — '+formatDate(t.dueDate):formatDate(t.dueDate)):'No due date';
+h+=`<div class="task-date-hd ${hdClass}">${displayDate}</div>`;lastDate=dateLabel}
+h+=taskItemH(t,dueClass)});
+if(!subTasks.length){h+=`<div style="padding:10px 14px;font-size:.78rem;color:var(--txt3);text-align:center">No tasks</div>`}
+h+=`</div></div>`});
 
 if(done.length){h+=`<div class="task-completed-hd" onclick="togCompleted(this)">&#9662; Completed (${done.length})</div><div class="task-completed-body">`;done.forEach(t=>{const dueClass=t.dueDate?(t.dueDate<todayStr?'overdue':t.dueDate===todayStr?'today-due':'future'):'';h+=taskItemH(t,dueClass)});h+='</div>'}
 h+='</div></div>'});
 el.innerHTML=h}
+
+function formatDate(ds){const d=new Date(ds+'T00:00:00');const opts={month:'short',day:'numeric'};return d.toLocaleDateString('en-US',opts)}
+
+// TASK CALENDAR
+let tcalMo=new Date().getMonth(),tcalYr=new Date().getFullYear();
+function renderTaskCal(){const el=document.getElementById('pgTaskCal');const mos=['January','February','March','April','May','June','July','August','September','October','November','December'];const dys=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];const todayStr=new Date().toISOString().split('T')[0];
+const fd=new Date(tcalYr,tcalMo,1).getDay(),dim=new Date(tcalYr,tcalMo+1,0).getDate(),pd=new Date(tcalYr,tcalMo,0).getDate(),today=new Date();
+let cdh='',dc=1,nc=1;const tc=Math.ceil((fd+dim)/7)*7;
+for(let i=0;i<tc;i++){let dn,oth=false,ds='';if(i<fd){dn=pd-fd+i+1;oth=true;const pm=tcalMo===0?11:tcalMo-1,py=tcalMo===0?tcalYr-1:tcalYr;ds=`${py}-${String(pm+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`}else if(dc>dim){dn=nc++;oth=true;const nm=tcalMo===11?0:tcalMo+1,ny=tcalMo===11?tcalYr+1:tcalYr;ds=`${ny}-${String(nm+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`}else{dn=dc++;ds=`${tcalYr}-${String(tcalMo+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`}
+const ist=!oth&&dn===today.getDate()&&tcalMo===today.getMonth()&&tcalYr===today.getFullYear();
+const dayTasks=tasks.filter(t=>t.dueDate===ds);
+let itemsH='';
+dayTasks.forEach(t=>{const projColor=PROJ[t.project]?.color||'#999';itemsH+=`<div class="tcal-item ${t.done?'tcal-done':''}" style="background:${projColor}15;color:${projColor}">${esc(t.text).substring(0,18)}</div>`});
+cdh+=`<div class="cal-day ${oth?'oth':''} ${ist?'today':''}" onclick="openTaskModal()"><div class="cal-dn">${dn}</div><div class="tcal-day-tasks">${itemsH}</div></div>`}
+
+el.innerHTML=`<div class="sec-hd"><div class="sec-t">Planner</div><button class="task-hd-add" onclick="openTaskModal()">+ Add Task</button></div>
+<div class="cal-hd"><div class="cal-nav"><button class="cal-nb" onclick="chTcMo(-1)">&#8249;</button><div class="cal-mo">${mos[tcalMo]} ${tcalYr}</div><button class="cal-nb" onclick="chTcMo(1)">&#8250;</button></div><button class="cal-today" onclick="goTcTd()">Today</button></div>
+<div class="cal-grid"><div class="cal-wk">${dys.map(d=>`<div class="cal-wd">${d}</div>`).join('')}</div><div class="cal-days">${cdh}</div></div>
+<div class="cal-legend"><div class="leg-i"><div class="leg-d" style="background:var(--re)"></div>RE</div><div class="leg-i"><div class="leg-d" style="background:var(--dk)"></div>DK</div><div class="leg-i"><div class="leg-d" style="background:var(--pv)"></div>PV</div></div>`}
+function chTcMo(d){tcalMo+=d;if(tcalMo>11){tcalMo=0;tcalYr++}if(tcalMo<0){tcalMo=11;tcalYr--}renderTaskCal()}
+function goTcTd(){const t=new Date();tcalMo=t.getMonth();tcalYr=t.getFullYear();renderTaskCal()}
 
 function taskItemH(t,dc){return`<div class="task-item ${t.done?'done':''}"><div class="task-chk ${t.done?'done':''}" onclick="togTask('${t.id}')">${t.done?'&#10003;':''}</div><div class="task-body"><div class="task-txt">${esc(t.text)}</div>${t.dueDate?`<div class="task-due ${dc}">${t.dueDate}</div>`:''}</div><div class="task-del" onclick="delTask('${t.id}')">&#10005;</div></div>`}
 
