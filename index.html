@@ -127,17 +127,17 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .leg-d{width:7px;height:7px;border-radius:50%}
 
 /* TASKS */
-.task-cat{margin-bottom:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;box-shadow:var(--sh-s)}
-.task-cat-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;transition:var(--tr);user-select:none}
+.task-cat{margin-bottom:24px}
+.task-cat-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;cursor:pointer;transition:var(--tr);user-select:none}
 .task-cat-hd:hover{background:var(--bg-hover)}
 .task-cat-title{font-family:'Fraunces',serif;font-weight:700;font-size:1rem;display:flex;align-items:center;gap:8px}
 .task-cat-count{font-size:.72rem;font-weight:600;color:var(--txt3);background:var(--bg);padding:2px 8px;border-radius:10px}
 .task-cat-arr{font-size:.8rem;color:var(--txt3);transition:var(--tr)}
 .task-cat-hd.open .task-cat-arr{transform:rotate(180deg)}
-.task-cat-body{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 10px}
-.task-cat-body.open{max-height:3000px;padding:8px 10px 10px}
+.task-cat-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.task-cat-body.open{max-height:3000px}
 /* Sub-category */
-.task-sub{margin-bottom:8px;border-radius:var(--r-s);border:1px solid var(--border-lt);background:var(--bg-hover);overflow:hidden}
+.task-sub{margin-bottom:10px;border-radius:var(--r-m);border:1px solid var(--border);background:var(--bg-card);overflow:hidden;box-shadow:var(--sh-s)}
 .task-sub:last-of-type{margin-bottom:4px}
 .task-sub-hd{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 20px;cursor:pointer;transition:var(--tr);user-select:none}
 .task-sub-hd:hover{background:var(--bg-hover)}
@@ -164,9 +164,9 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .task-item:hover .task-del{opacity:1}
 .task-del:hover{color:#dc3545}
 /* Completed section under category */
-.task-completed-hd{padding:10px 16px 10px 20px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3);cursor:pointer;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;user-select:none}
+.task-completed-hd{padding:12px 16px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3);cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);margin-top:10px}
 .task-completed-hd:hover{background:var(--bg-hover)}
-.task-completed-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.task-completed-body{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-m) var(--r-m);margin-top:-1px}
 .task-completed-body.open{max-height:2000px}
 /* Add task row */
 .task-add{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border-lt);align-items:center}
@@ -384,7 +384,7 @@ function togCompleted(hd){hd.nextElementSibling.classList.toggle('open')}
 
 // AUTHOR VIEW
 function renderAuthView(){const el=document.getElementById('pgAuth');const a=curAuthor;const pic=profilePics[a.id];
-el.innerHTML=`<div class="auth-banner"><div class="pfp-edit-wrap" onclick="document.getElementById('pfpInput').click()"><div class="auth-big-av" style="background:${PROJ[a.project].color}">${pic?`<img src="${pic}" alt="">`:`${a.init}`}</div><div class="pfp-edit-badge">&#9998;</div><input type="file" id="pfpInput" accept="image/*" style="position:absolute;opacity:0;width:0;height:0" onchange="uploadPfp('${a.id}',this.files[0])"></div><div class="auth-b-info"><h2>${a.handle}</h2><p>${PROJ[a.project].name}</p></div></div><div class="filt-row">${['all','draft','ready','posted'].map(f=>`<div class="filt-p ${curFilter===f?'active':''}" onclick="setFilt('${f}')">${f==='all'?'All':f[0].toUpperCase()+f.slice(1)}</div>`).join('')}</div><div class="post-grid" id="postGrid"><div style="text-align:center;padding:30px;grid-column:1/-1"><span class="spinner"></span></div></div>`;renderAuthorPosts()}
+el.innerHTML=`<div class="auth-banner"><div style="position:relative;cursor:pointer" onclick="document.getElementById('pfpInput').click()"><div class="auth-big-av" style="background:${PROJ[a.project].color}">${pic?`<img src="${pic}" alt="">`:`${a.init}`}</div><input type="file" id="pfpInput" accept="image/*" style="position:absolute;opacity:0;width:0;height:0" onchange="uploadPfp('${a.id}',this.files[0])"></div><div class="auth-b-info"><h2>${a.handle}</h2><p>${PROJ[a.project].name}</p></div></div><div class="filt-row">${['all','draft','ready','posted'].map(f=>`<div class="filt-p ${curFilter===f?'active':''}" onclick="setFilt('${f}')">${f==='all'?'All':f[0].toUpperCase()+f.slice(1)}</div>`).join('')}</div><div class="post-grid" id="postGrid"><div style="text-align:center;padding:30px;grid-column:1/-1"><span class="spinner"></span></div></div>`;renderAuthorPosts()}
 function setFilt(f){curFilter=f;renderAuthView()}
 
 function renderAuthorPosts(){const g=document.getElementById('postGrid');if(!g||!curAuthor)return;const data=allPosts[curAuthor.id]||{};postsCache=data;const posts=Object.entries(data).map(([id,p])=>({id,...p})).filter(p=>curFilter==='all'||p.status===curFilter).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
