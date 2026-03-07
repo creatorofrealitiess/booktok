@@ -3,1949 +3,420 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>PostFlow — BookTok Manager</title>
+<title>BookTok Studio</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
 <style>
-/* ===== DESIGN SYSTEM ===== */
 :root {
-  --white: #ffffff;
-  --bg: #f6f5f1;
-  --bg-warm: #f0eeea;
-  --bg-card: #ffffff;
-  --bg-hover: #faf9f7;
-  --border: #e8e6e1;
-  --border-light: #f0eeea;
-  --text-primary: #1a1815;
-  --text-secondary: #6b6660;
-  --text-muted: #a09a93;
-  --text-inverse: #ffffff;
-  --accent: #e85d3a;
-  --accent-hover: #d44e2d;
-  --accent-light: #fef0ec;
-  --accent-subtle: #fdf6f4;
-  --status-draft: #e5a832;
-  --status-draft-bg: #fdf6e8;
-  --status-ready: #2da562;
-  --status-ready-bg: #edf7f1;
-  --status-posted: #6366f1;
-  --status-posted-bg: #eef0fe;
-  --project-re: #e85d3a;
-  --project-dk: #6366f1;
-  --project-pv: #d946a8;
-  --shadow-sm: 0 1px 2px rgba(26,24,21,0.04);
-  --shadow-md: 0 4px 12px rgba(26,24,21,0.06);
-  --shadow-lg: 0 8px 30px rgba(26,24,21,0.08);
-  --shadow-hover: 0 8px 24px rgba(26,24,21,0.1);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --transition: all 0.2s ease;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  font-family: 'DM Sans', -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text-primary);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-
-/* ===== AUTH ===== */
-.auth-screen {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  z-index: 1000;
-}
-
-.auth-box {
-  width: 90%;
-  max-width: 380px;
-  animation: slideUp 0.5s ease;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.auth-brand {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.auth-brand h1 {
-  font-family: 'Fraunces', serif;
-  font-weight: 800;
-  font-size: 2.2rem;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
-}
-
-.auth-brand h1 span { color: var(--accent); }
-
-.auth-brand p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-top: 6px;
-}
-
-.auth-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  box-shadow: var(--shadow-md);
-}
-
-.auth-field { margin-bottom: 14px; }
-
-.auth-field label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.auth-field input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  color: var(--text-primary);
-  background: var(--white);
-  outline: none;
-  transition: var(--transition);
-}
-
-.auth-field input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-light);
-}
-
-.auth-submit {
-  width: 100%;
-  padding: 13px;
-  background: var(--accent);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  margin-top: 6px;
-}
-
-.auth-submit:hover { background: var(--accent-hover); }
-
-.auth-switch {
-  text-align: center;
-  margin-top: 18px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.auth-switch a {
-  color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.auth-switch a:hover { text-decoration: underline; }
-
-.auth-error {
-  color: #dc3545;
-  font-size: 0.82rem;
-  text-align: center;
-  margin-top: 12px;
-  min-height: 18px;
-}
-
-/* ===== APP SHELL ===== */
-.app { display: none; }
-.app.active { display: flex; flex-direction: column; min-height: 100vh; }
-
-/* ===== NAV BAR ===== */
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  padding: 0 20px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.nav-back {
-  display: none;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-secondary);
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  transition: var(--transition);
-}
-
-.nav-back:hover { background: var(--bg); }
-
-.nav-brand {
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--text-primary);
-}
-
-.nav-brand span { color: var(--accent); }
-
-.nav-title {
-  display: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text-primary);
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  transition: var(--transition);
-}
-
-.nav-btn:hover { background: var(--bg); color: var(--text-primary); }
-
-/* ===== BOTTOM TABS ===== */
-.bottom-tabs {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  display: flex;
-  z-index: 100;
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-.tab-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px 0 8px;
-  cursor: pointer;
-  transition: var(--transition);
-  gap: 3px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.tab-icon { font-size: 1.3rem; line-height: 1; }
-.tab-label { font-size: 0.65rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0.3px; }
-.tab-item.active .tab-label { color: var(--accent); font-weight: 600; }
-.tab-item.active .tab-icon { filter: none; }
-.tab-item:not(.active) .tab-icon { opacity: 0.5; }
-
-/* ===== PAGE CONTENT ===== */
-.page { display: none; padding: 20px; padding-bottom: 90px; }
-.page.active { display: block; }
-
-/* Section headers */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.section-title {
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: var(--text-primary);
-}
-
-.section-subtitle {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-/* ===== ACCOUNTS PAGE ===== */
-.account-group { margin-bottom: 24px; }
-
-.group-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding-left: 2px;
-}
-
-.group-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.group-name {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-}
-
-.account-list { display: flex; flex-direction: column; gap: 8px; }
-
-.account-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  cursor: pointer;
-  transition: var(--transition);
-  box-shadow: var(--shadow-sm);
-}
-
-.account-card:hover {
-  box-shadow: var(--shadow-hover);
-  transform: translateY(-1px);
-  border-color: #ddd;
-}
-
-.account-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--text-inverse);
-  flex-shrink: 0;
-}
-
-.account-info { flex: 1; min-width: 0; }
-.account-handle { font-weight: 600; font-size: 0.92rem; }
-
-.account-counts {
-  display: flex;
-  gap: 6px;
-  margin-top: 5px;
-}
-
-.count-pill {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-
-.count-pill.draft { background: var(--status-draft-bg); color: var(--status-draft); }
-.count-pill.ready { background: var(--status-ready-bg); color: var(--status-ready); }
-.count-pill.posted { background: var(--status-posted-bg); color: var(--status-posted); }
-
-.account-arrow {
-  color: var(--text-muted);
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-/* ===== CALENDAR PAGE ===== */
-.cal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.cal-nav {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cal-nav-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--white);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  transition: var(--transition);
-}
-
-.cal-nav-btn:hover { background: var(--bg); }
-
-.cal-month {
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.cal-today-btn {
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--white);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.cal-today-btn:hover { background: var(--bg); }
-
-.cal-grid {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-
-.cal-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid var(--border);
-}
-
-.cal-weekday {
-  padding: 10px 4px;
-  text-align: center;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-}
-
-.cal-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-}
-
-.cal-day {
-  min-height: 70px;
-  padding: 6px;
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
-  cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-}
-
-.cal-day:nth-child(7n) { border-right: none; }
-.cal-day:hover { background: var(--bg-hover); }
-
-.cal-day-num {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.cal-day.today .cal-day-num {
-  background: var(--accent);
-  color: var(--text-inverse);
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-}
-
-.cal-day.other-month { opacity: 0.3; }
-
-.cal-dot-row {
-  display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-}
-
-.cal-post-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.cal-post-dot.draft { background: var(--status-draft); }
-.cal-post-dot.ready { background: var(--status-ready); }
-.cal-post-dot.posted { background: var(--status-posted); }
-
-.cal-legend {
-  display: flex;
-  gap: 16px;
-  margin-top: 14px;
-  padding-left: 4px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.legend-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-}
-
-/* Account filter for calendar */
-.cal-filter {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  margin-bottom: 14px;
-  padding-bottom: 2px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.cal-filter-chip {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: var(--transition);
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-secondary);
-}
-
-.cal-filter-chip.active {
-  background: var(--text-primary);
-  color: var(--text-inverse);
-  border-color: var(--text-primary);
-}
-
-.cal-filter-chip:hover:not(.active) {
-  background: var(--bg);
-}
-
-/* ===== TASKS PAGE ===== */
-.tasks-add-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.tasks-input {
-  flex: 1;
-  padding: 11px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  background: var(--white);
-  outline: none;
-  transition: var(--transition);
-}
-
-.tasks-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
-
-.tasks-add-btn {
-  padding: 0 18px;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--text-inverse);
-  border: none;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.tasks-add-btn:hover { background: var(--accent-hover); }
-
-.task-list { display: flex; flex-direction: column; gap: 6px; }
-
-.task-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition);
-}
-
-.task-check {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 2px solid var(--border);
-  cursor: pointer;
-  flex-shrink: 0;
-  margin-top: 1px;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--white);
-}
-
-.task-check:hover { border-color: var(--accent); }
-
-.task-check.done {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-  font-size: 0.7rem;
-}
-
-.task-content { flex: 1; min-width: 0; }
-.task-text { font-size: 0.9rem; line-height: 1.4; }
-.task-card.done .task-text { text-decoration: line-through; color: var(--text-muted); }
-
-.task-meta {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.task-tag {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: var(--bg);
-  padding: 2px 7px;
-  border-radius: 4px;
-}
-
-.task-delete {
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1rem;
-  opacity: 0;
-  transition: var(--transition);
-  flex-shrink: 0;
-  padding: 2px;
-}
-
-.task-card:hover .task-delete { opacity: 1; }
-.task-delete:hover { color: #dc3545; }
-
-.tasks-section-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  margin: 20px 0 10px 2px;
-}
-
-/* ===== AUTHOR VIEW ===== */
-.author-banner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-}
-
-.author-big-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--text-inverse);
-}
-
-.author-banner-info h2 {
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 1.15rem;
-}
-
-.author-banner-info p {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-/* Filter pills */
-.filter-row {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.filter-pill {
-  padding: 7px 16px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: var(--transition);
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-secondary);
-}
-
-.filter-pill.active {
-  background: var(--text-primary);
-  color: var(--text-inverse);
-  border-color: var(--text-primary);
-}
-
-.filter-pill:hover:not(.active) { background: var(--bg); }
-
-/* Post cards in author view */
-.post-list { display: flex; flex-direction: column; gap: 10px; }
-
-.post-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  cursor: pointer;
-  transition: var(--transition);
-  box-shadow: var(--shadow-sm);
-}
-
-.post-card:hover {
-  box-shadow: var(--shadow-hover);
-  transform: translateY(-1px);
-}
-
-.post-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.post-hook {
-  font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.35;
-  flex: 1;
-}
-
-.status-tag {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-}
-
-.status-tag.draft { background: var(--status-draft-bg); color: var(--status-draft); }
-.status-tag.ready { background: var(--status-ready-bg); color: var(--status-ready); }
-.status-tag.posted { background: var(--status-posted-bg); color: var(--status-posted); }
-
-.post-preview {
-  font-size: 0.84rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.post-thumbs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.post-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  object-fit: cover;
-  background: var(--bg);
-  border: 1px solid var(--border-light);
-}
-
-.post-footer {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.post-meta-tag {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  background: var(--bg);
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 500;
-}
+  --white:#fff;--bg:#f6f5f1;--bg-warm:#f0eeea;--bg-card:#fff;--bg-hover:#faf9f7;
+  --border:#e8e6e1;--border-lt:#f0eeea;--txt:#1a1815;--txt2:#6b6660;--txt3:#a09a93;--txtW:#fff;
+  --accent:#e85d3a;--accent-h:#d44e2d;--accent-lt:#fef0ec;
+  --draft:#e5a832;--draft-bg:#fdf6e8;--ready:#2da562;--ready-bg:#edf7f1;--posted:#6366f1;--posted-bg:#eef0fe;
+  --re:#e85d3a;--dk:#6366f1;--pv:#d946a8;
+  --sh-s:0 1px 2px rgba(26,24,21,.04);--sh-m:0 4px 12px rgba(26,24,21,.06);--sh-l:0 8px 30px rgba(26,24,21,.08);--sh-h:0 8px 24px rgba(26,24,21,.1);
+  --r-s:8px;--r-m:12px;--r-l:16px;
+  --tr:all .2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* AUTH */
+.auth-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:1000}
+.auth-box{width:90%;max-width:380px;animation:su .5s ease}
+@keyframes su{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.auth-brand{text-align:center;margin-bottom:36px}
+.auth-brand h1{font-family:'Fraunces',serif;font-weight:800;font-size:2rem;color:var(--txt);letter-spacing:-.5px}
+.auth-brand h1 span{color:var(--accent)}
+.auth-brand p{color:var(--txt2);font-size:.85rem;margin-top:4px}
+.auth-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-l);padding:28px;box-shadow:var(--sh-m)}
+.auth-field{margin-bottom:14px}
+.auth-field label{display:block;font-size:.75rem;font-weight:600;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.auth-field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-s);font-family:'DM Sans',sans-serif;font-size:.95rem;color:var(--txt);background:var(--white);outline:none;transition:var(--tr)}
+.auth-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-lt)}
+.auth-submit{width:100%;padding:13px;background:var(--accent);color:var(--txtW);border:none;border-radius:var(--r-s);font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:var(--tr);margin-top:6px}
+.auth-submit:hover{background:var(--accent-h)}
+.auth-switch{text-align:center;margin-top:18px;font-size:.85rem;color:var(--txt2)}
+.auth-switch a{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none}
+.auth-error{color:#dc3545;font-size:.82rem;text-align:center;margin-top:12px;min-height:18px}
+
+/* APP */
+.app{display:none}.app.active{display:flex;flex-direction:column;min-height:100vh}
+
+/* NAV */
+.navbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-left{display:flex;align-items:center;gap:12px}
+.nav-back{display:none;width:34px;height:34px;border-radius:var(--r-s);border:1px solid var(--border);background:var(--white);color:var(--txt2);cursor:pointer;align-items:center;justify-content:center;font-size:1.1rem;transition:var(--tr)}
+.nav-back:hover{background:var(--bg)}
+.nav-brand{font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;color:var(--txt)}
+.nav-brand span{color:var(--accent)}
+.nav-sub{font-size:.7rem;color:var(--txt3);font-weight:400;display:block;font-family:'DM Sans',sans-serif;letter-spacing:.3px}
+.nav-title{display:none;font-weight:600;font-size:.95rem;color:var(--txt)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{width:34px;height:34px;border-radius:var(--r-s);border:1px solid var(--border);background:var(--white);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:var(--tr)}
+.nav-btn:hover{background:var(--bg);color:var(--txt)}
+
+/* BOTTOM TABS */
+.btabs{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
+.tab-i{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;cursor:pointer;transition:var(--tr);gap:3px;-webkit-tap-highlight-color:transparent}
+.tab-ic{font-size:1.3rem;line-height:1}.tab-lb{font-size:.65rem;font-weight:500;color:var(--txt3);letter-spacing:.3px}
+.tab-i.active .tab-lb{color:var(--accent);font-weight:600}
+.tab-i:not(.active) .tab-ic{opacity:.45}
+
+/* PAGES */
+.page{display:none;padding:20px;padding-bottom:90px}.page.active{display:block}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-t{font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem}
+.sec-st{font-size:.85rem;color:var(--txt2);margin-top:2px}
+
+/* ACCOUNTS */
+.acc-grp{margin-bottom:24px}
+.grp-lb{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-left:2px}
+.grp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.grp-nm{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--txt3)}
+.acc-list{display:flex;flex-direction:column;gap:8px}
+.acc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:var(--tr);box-shadow:var(--sh-s)}
+.acc-card:hover{box-shadow:var(--sh-h);transform:translateY(-1px)}
+.acc-av{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:.85rem;color:var(--txtW);flex-shrink:0;overflow:hidden;background-size:cover;background-position:center}
+.acc-av img{width:100%;height:100%;object-fit:cover}
+.acc-info{flex:1;min-width:0}.acc-handle{font-weight:600;font-size:.92rem}
+.acc-counts{display:flex;gap:6px;margin-top:5px}
+.cnt-pill{font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:20px}
+.cnt-pill.draft{background:var(--draft-bg);color:var(--draft)}.cnt-pill.ready{background:var(--ready-bg);color:var(--ready)}.cnt-pill.posted{background:var(--posted-bg);color:var(--posted)}
+.acc-arrow{color:var(--txt3);font-size:1.1rem;flex-shrink:0}
+/* PFP upload */
+.pfp-upload{position:relative}
+.pfp-upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pfp-badge{position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--accent);color:white;font-size:.6rem;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)}
+
+/* CALENDAR */
+.cal-filter{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.cal-chip{padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:500;white-space:nowrap;cursor:pointer;transition:var(--tr);border:1px solid var(--border);background:var(--white);color:var(--txt2)}
+.cal-chip.active{background:var(--txt);color:var(--txtW);border-color:var(--txt)}
+.cal-chip:hover:not(.active){background:var(--bg)}
+.cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-nav{display:flex;align-items:center;gap:12px}
+.cal-nb{width:32px;height:32px;border-radius:var(--r-s);border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--txt2);transition:var(--tr)}
+.cal-nb:hover{background:var(--bg)}
+.cal-mo{font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem}
+.cal-today{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--white);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;color:var(--txt2);cursor:pointer;transition:var(--tr)}
+.cal-today:hover{background:var(--bg)}
+.cal-grid{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;box-shadow:var(--sh-s)}
+.cal-wk{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border)}
+.cal-wd{padding:10px 4px;text-align:center;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3)}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:80px;padding:5px;border-right:1px solid var(--border-lt);border-bottom:1px solid var(--border-lt);cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day:hover{background:var(--bg-hover)}
+.cal-dn{font-size:.76rem;font-weight:500;color:var(--txt2);margin-bottom:3px}
+.cal-day.today .cal-dn{background:var(--accent);color:var(--txtW);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem}
+.cal-day.oth{opacity:.3}
+/* Calendar post items */
+.cal-item{display:flex;align-items:center;gap:3px;padding:2px 4px;border-radius:4px;margin-bottom:2px;font-size:.62rem;font-weight:600;cursor:pointer;transition:var(--tr);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cal-item:hover{opacity:.8}
+.cal-item.proj-re{background:rgba(232,93,58,.12);color:var(--re)}
+.cal-item.proj-dk{background:rgba(99,102,241,.12);color:var(--dk)}
+.cal-item.proj-pv{background:rgba(217,70,168,.12);color:var(--pv)}
+.cal-thumb{width:16px;height:16px;border-radius:3px;object-fit:cover;flex-shrink:0}
+.cal-legend{display:flex;gap:16px;margin-top:14px;padding-left:4px;flex-wrap:wrap}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--txt3)}
+.leg-d{width:7px;height:7px;border-radius:50%}
+
+/* TASKS */
+.task-cat{margin-bottom:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;box-shadow:var(--sh-s)}
+.task-cat-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;transition:var(--tr);user-select:none}
+.task-cat-hd:hover{background:var(--bg-hover)}
+.task-cat-title{font-family:'Fraunces',serif;font-weight:700;font-size:1rem;display:flex;align-items:center;gap:8px}
+.task-cat-count{font-size:.72rem;font-weight:600;color:var(--txt3);background:var(--bg);padding:2px 8px;border-radius:10px}
+.task-cat-arr{font-size:.8rem;color:var(--txt3);transition:var(--tr)}
+.task-cat-hd.open .task-cat-arr{transform:rotate(180deg)}
+.task-cat-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.task-cat-body.open{max-height:3000px}
+/* Sub-category */
+.task-sub{border-top:1px solid var(--border-lt)}
+.task-sub-hd{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 28px;cursor:pointer;transition:var(--tr);user-select:none}
+.task-sub-hd:hover{background:var(--bg-hover)}
+.task-sub-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.task-sub-nm{font-size:.78rem;font-weight:600;color:var(--txt2)}
+.task-sub-arr{font-size:.7rem;color:var(--txt3);transition:var(--tr);margin-left:auto}
+.task-sub-hd.open .task-sub-arr{transform:rotate(180deg)}
+.task-sub-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.task-sub-body.open{max-height:2000px}
+/* Task items */
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px 10px 40px;border-top:1px solid var(--border-lt);transition:var(--tr)}
+.task-item:hover{background:var(--bg-hover)}
+.task-chk{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;transition:var(--tr);display:flex;align-items:center;justify-content:center;background:var(--white)}
+.task-chk:hover{border-color:var(--accent)}
+.task-chk.done{background:var(--accent);border-color:var(--accent);color:white;font-size:.65rem}
+.task-body{flex:1;min-width:0}
+.task-txt{font-size:.88rem;line-height:1.4}
+.task-item.done .task-txt{text-decoration:line-through;color:var(--txt3)}
+.task-due{font-size:.7rem;font-weight:500;margin-top:3px;display:inline-block;padding:1px 6px;border-radius:4px}
+.task-due.overdue{background:#fde8e8;color:#dc3545}
+.task-due.today-due{background:var(--ready-bg);color:var(--ready)}
+.task-due.future{color:var(--txt3)}
+.task-del{color:var(--txt3);cursor:pointer;font-size:.9rem;opacity:0;transition:var(--tr);flex-shrink:0;padding:2px}
+.task-item:hover .task-del{opacity:1}
+.task-del:hover{color:#dc3545}
+/* Completed section under category */
+.task-completed-hd{padding:10px 16px 10px 20px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3);cursor:pointer;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;user-select:none}
+.task-completed-hd:hover{background:var(--bg-hover)}
+.task-completed-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.task-completed-body.open{max-height:2000px}
+/* Add task row */
+.task-add{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border-lt);align-items:center}
+.task-add-in{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r-s);font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--txt);background:var(--white);outline:none;transition:var(--tr)}
+.task-add-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-lt)}
+.task-add-date{padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--r-s);font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--txt);background:var(--white);outline:none;width:130px}
+.task-add-btn{padding:9px 16px;border-radius:var(--r-s);background:var(--accent);color:var(--txtW);border:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer;transition:var(--tr);white-space:nowrap}
+.task-add-btn:hover{background:var(--accent-h)}
+
+/* AUTHOR VIEW */
+.auth-banner{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);box-shadow:var(--sh-s)}
+.auth-big-av{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;color:var(--txtW);overflow:hidden;background-size:cover;background-position:center}
+.auth-big-av img{width:100%;height:100%;object-fit:cover}
+.auth-b-info h2{font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem}
+.auth-b-info p{font-size:.82rem;color:var(--txt2);margin-top:2px}
+.filt-row{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.filt-p{padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:var(--tr);border:1px solid var(--border);background:var(--white);color:var(--txt2)}
+.filt-p.active{background:var(--txt);color:var(--txtW);border-color:var(--txt)}
+.filt-p:hover:not(.active){background:var(--bg)}
+
+/* POST CARDS — 2 column grid */
+.post-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.p-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-m);cursor:pointer;transition:var(--tr);box-shadow:var(--sh-s);overflow:hidden;display:flex;flex-direction:column}
+.p-card:hover{box-shadow:var(--sh-h);transform:translateY(-2px)}
+.p-card-img{width:100%;aspect-ratio:1;background:var(--bg-warm);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.p-card-img img{width:100%;height:100%;object-fit:cover}
+.p-card-img .no-img{font-size:2rem;opacity:.25}
+.p-card-status{position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:12px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.p-card-status.draft{background:var(--draft-bg);color:var(--draft)}.p-card-status.ready{background:var(--ready-bg);color:var(--ready)}.p-card-status.posted{background:var(--posted-bg);color:var(--posted)}
+.p-card-body{padding:10px 12px}
+.p-card-hook{font-weight:600;font-size:.82rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
+.p-card-meta{font-size:.68rem;color:var(--txt3)}
 
 /* FAB */
-.fab {
-  position: fixed;
-  bottom: 78px;
-  right: 18px;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--accent);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(232, 93, 58, 0.35);
-  transition: var(--transition);
-  z-index: 50;
-}
+.fab{position:fixed;bottom:78px;right:18px;width:52px;height:52px;border-radius:16px;background:var(--accent);border:none;color:white;font-size:1.5rem;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(232,93,58,.35);transition:var(--tr);z-index:50}
+.fab:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(232,93,58,.45)}
+.fab.show{display:flex}
 
-.fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232, 93, 58, 0.45); }
-.fab.show { display: flex; }
-
-/* ===== POST EDITOR ===== */
-.editor-page { display: none; padding: 16px 20px 100px; }
-.editor-page.active { display: block; }
-
-.ed-section { margin-bottom: 22px; }
-
-.ed-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ed-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.ed-input, .ed-textarea {
-  width: 100%;
-  padding: 11px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  background: var(--white);
-  outline: none;
-  transition: var(--transition);
-  resize: none;
-}
-
-.ed-input:focus, .ed-textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-light);
-}
-
-.ed-textarea { min-height: 80px; line-height: 1.6; }
-.ed-textarea.sm { min-height: 56px; }
-
-/* Image dropzone */
-.dropzone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-md);
-  padding: 28px 16px;
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-  background: var(--bg-hover);
-}
-
-.dropzone:hover, .dropzone.over {
-  border-color: var(--accent);
-  background: var(--accent-light);
-}
-
-.dropzone-icon { font-size: 1.6rem; margin-bottom: 6px; }
-.dropzone-text { font-size: 0.82rem; color: var(--text-secondary); }
-.dropzone-text b { color: var(--accent); font-weight: 600; }
-
-.img-gallery {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.img-item {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-
-.img-item img { width: 100%; height: 100%; object-fit: cover; }
-
-.img-remove {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: rgba(0,0,0,0.6);
-  color: white;
-  border: none;
-  font-size: 0.65rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.img-save {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: rgba(0,0,0,0.6);
-  color: white;
-  border: none;
-  font-size: 0.65rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Copy button */
-.copy-btn {
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-secondary);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.copy-btn:hover { background: var(--bg); color: var(--text-primary); }
-.copy-btn.copied { background: var(--status-ready-bg); color: var(--status-ready); border-color: var(--status-ready); }
-
-/* Hashtag bank */
-.tag-bank {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 10px;
-}
-
-.tag-chip {
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  border: 1px solid var(--border);
-  background: var(--white);
-  color: var(--text-secondary);
-}
-
-.tag-chip:hover { border-color: var(--accent); color: var(--accent); }
-.tag-chip.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
-
-/* Copy all */
-.copy-all {
-  width: 100%;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  background: var(--text-primary);
-  color: var(--text-inverse);
-  border: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.copy-all:hover { opacity: 0.9; }
-
-/* Status picker */
-.status-picker { display: flex; gap: 8px; }
-
-.status-opt {
-  flex: 1;
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border);
-  background: var(--white);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-secondary);
-}
-
-.status-opt:hover { border-color: #ccc; }
-.status-opt.active[data-s="draft"] { border-color: var(--status-draft); color: var(--status-draft); background: var(--status-draft-bg); }
-.status-opt.active[data-s="ready"] { border-color: var(--status-ready); color: var(--status-ready); background: var(--status-ready-bg); }
-.status-opt.active[data-s="posted"] { border-color: var(--status-posted); color: var(--status-posted); background: var(--status-posted-bg); }
-
-/* Schedule row */
-.sched-row { display: flex; gap: 8px; }
-.sched-row input { flex: 1; }
-
-/* Collapsible */
-.collapse-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 8px 0;
-}
-
-.collapse-head .arr {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  transition: var(--transition);
-}
-
-.collapse-head.open .arr { transform: rotate(180deg); }
-.collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-.collapse-body.open { max-height: 400px; }
-
-/* Save bar */
-.save-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 12px 20px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-  z-index: 100;
-}
-
-.save-btn {
-  flex: 1;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  border: none;
-}
-
-.save-btn.primary { background: var(--accent); color: white; }
-.save-btn.primary:hover { background: var(--accent-hover); }
-.save-btn.outline { background: var(--white); color: #dc3545; border: 1px solid #f5c6cb; }
-.save-btn.outline:hover { background: #fff5f5; }
-
-/* Empty state */
-.empty {
-  text-align: center;
-  padding: 50px 20px;
-}
-
-.empty-icon { font-size: 2.2rem; margin-bottom: 10px; }
-.empty-text { font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
-.empty-sub { font-size: 0.84rem; color: var(--text-muted); }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  background: var(--text-primary);
-  color: var(--text-inverse);
-  padding: 10px 22px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 500;
-  box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transition: all 0.35s ease;
-  pointer-events: none;
-  z-index: 999;
-}
-
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* Spinner */
-.spinner {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.5s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Scrollbars */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-@media (max-width: 400px) {
-  .author-grid { grid-template-columns: 1fr; }
-  .cal-day { min-height: 55px; }
-}
+/* EDITOR */
+.ed-page{display:none;padding:16px 20px 100px}.ed-page.active{display:block}
+.ed-sec{margin-bottom:22px}
+.ed-lb{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ed-row{display:flex;align-items:center;justify-content:space-between}
+.ed-in,.ed-ta{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r-s);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--txt);background:var(--white);outline:none;transition:var(--tr);resize:none}
+.ed-in:focus,.ed-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-lt)}
+.ed-ta{min-height:80px;line-height:1.6}.ed-ta.sm{min-height:56px}
+.dropzone{border:2px dashed var(--border);border-radius:var(--r-m);padding:28px 16px;text-align:center;cursor:pointer;transition:var(--tr);background:var(--bg-hover)}
+.dropzone:hover,.dropzone.over{border-color:var(--accent);background:var(--accent-lt)}
+.dz-icon{font-size:1.6rem;margin-bottom:6px}.dz-txt{font-size:.82rem;color:var(--txt2)}.dz-txt b{color:var(--accent)}
+.img-gal{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.img-it{position:relative;width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.img-it img{width:100%;height:100%;object-fit:cover}
+.img-rm{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.img-sv{position:absolute;bottom:4px;right:4px;width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cp-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--txt2);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.cp-btn:hover{background:var(--bg);color:var(--txt)}.cp-btn.copied{background:var(--ready-bg);color:var(--ready);border-color:var(--ready)}
+.tag-bank{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.tag-c{padding:4px 10px;border-radius:16px;font-size:.72rem;font-weight:500;cursor:pointer;transition:var(--tr);border:1px solid var(--border);background:var(--white);color:var(--txt2)}
+.tag-c:hover{border-color:var(--accent);color:var(--accent)}.tag-c.active{background:var(--accent-lt);color:var(--accent);border-color:var(--accent)}
+.cp-all{width:100%;padding:12px;border-radius:var(--r-s);background:var(--txt);color:var(--txtW);border:none;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.cp-all:hover{opacity:.9}
+.st-pick{display:flex;gap:8px}
+.st-opt{flex:1;padding:10px;border-radius:var(--r-s);border:1.5px solid var(--border);background:var(--white);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;text-align:center;cursor:pointer;transition:var(--tr);color:var(--txt2)}
+.st-opt:hover{border-color:#ccc}
+.st-opt.active[data-s="draft"]{border-color:var(--draft);color:var(--draft);background:var(--draft-bg)}
+.st-opt.active[data-s="ready"]{border-color:var(--ready);color:var(--ready);background:var(--ready-bg)}
+.st-opt.active[data-s="posted"]{border-color:var(--posted);color:var(--posted);background:var(--posted-bg)}
+.sch-row{display:flex;gap:8px}.sch-row input{flex:1}
+.col-hd{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 0}
+.col-hd .arr{font-size:.8rem;color:var(--txt3);transition:var(--tr)}.col-hd.open .arr{transform:rotate(180deg)}
+.col-bd{max-height:0;overflow:hidden;transition:max-height .3s ease}.col-bd.open{max-height:400px}
+.save-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0));background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;z-index:100}
+.sv-btn{flex:1;padding:12px;border-radius:var(--r-s);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:var(--tr);border:none}
+.sv-btn.pri{background:var(--accent);color:white}.sv-btn.pri:hover{background:var(--accent-h)}
+.sv-btn.out{background:var(--white);color:#dc3545;border:1px solid #f5c6cb}.sv-btn.out:hover{background:#fff5f5}
+.empty{text-align:center;padding:50px 20px}.empty-ic{font-size:2.2rem;margin-bottom:10px}.empty-t{font-weight:600;color:var(--txt2);margin-bottom:4px}.empty-s{font-size:.84rem;color:var(--txt3)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--txt);color:var(--txtW);padding:10px 22px;border-radius:var(--r-m);font-size:.85rem;font-weight:500;box-shadow:var(--sh-l);opacity:0;transition:all .35s ease;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .5s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+@media(max-width:400px){.post-grid{grid-template-columns:1fr}.cal-day{min-height:60px}}
 </style>
 </head>
 <body>
 
-<!-- ===== AUTH ===== -->
 <div class="auth-screen" id="authScreen">
   <div class="auth-box">
-    <div class="auth-brand">
-      <h1>Post<span>Flow</span></h1>
-      <p>BookTok Post Manager</p>
-    </div>
+    <div class="auth-brand"><h1>BookTok <span>Studio</span></h1><p>TikTok Post Manager</p></div>
     <div class="auth-card">
-      <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password">
-      </div>
+      <div class="auth-field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="auth-submit" id="authBtn" onclick="handleAuth()">Sign In</button>
-      <div class="auth-switch" id="authSwitch">
-        No account? <a onclick="toggleAuth()">Create one</a>
-      </div>
-      <div class="auth-error" id="authError"></div>
+      <div class="auth-switch" id="authSw">No account? <a onclick="togAuth()">Create one</a></div>
+      <div class="auth-error" id="authErr"></div>
     </div>
   </div>
 </div>
 
-<!-- ===== APP ===== -->
 <div class="app" id="app">
-  <!-- Navbar -->
   <div class="navbar">
     <div class="nav-left">
       <button class="nav-back" id="navBack" onclick="goBack()">&#8592;</button>
-      <div class="nav-brand" id="navBrand">Post<span>Flow</span></div>
+      <div class="nav-brand" id="navBrand">BookTok <span>Studio</span><span class="nav-sub">TikTok Post Manager</span></div>
       <div class="nav-title" id="navTitle"></div>
     </div>
-    <div class="nav-right">
-      <button class="nav-btn" onclick="signOut()" title="Sign out">&#x279C;</button>
-    </div>
+    <div class="nav-right"><button class="nav-btn" onclick="signOut()" title="Sign out">&#x279C;</button></div>
   </div>
-
-  <!-- Pages -->
-  <div class="page active" id="pageAccounts"></div>
-  <div class="page" id="pageCalendar"></div>
-  <div class="page" id="pageTasks"></div>
-  <div class="page" id="pageAuthor"></div>
-  <div class="editor-page" id="pageEditor"></div>
-
-  <!-- FAB -->
+  <div class="page active" id="pgAcc"></div>
+  <div class="page" id="pgCal"></div>
+  <div class="page" id="pgTask"></div>
+  <div class="page" id="pgAuth"></div>
+  <div class="ed-page" id="pgEdit"></div>
   <button class="fab" id="fab" onclick="newPost()">+</button>
-
-  <!-- Bottom Tabs -->
-  <div class="bottom-tabs" id="bottomTabs">
-    <div class="tab-item active" onclick="switchTab('accounts')">
-      <div class="tab-icon">&#128100;</div>
-      <div class="tab-label">Accounts</div>
-    </div>
-    <div class="tab-item" onclick="switchTab('calendar')">
-      <div class="tab-icon">&#128197;</div>
-      <div class="tab-label">Calendar</div>
-    </div>
-    <div class="tab-item" onclick="switchTab('tasks')">
-      <div class="tab-icon">&#9745;</div>
-      <div class="tab-label">Tasks</div>
-    </div>
+  <div class="btabs" id="btabs">
+    <div class="tab-i active" onclick="swTab('accounts')"><div class="tab-ic">&#128100;</div><div class="tab-lb">Accounts</div></div>
+    <div class="tab-i" onclick="swTab('calendar')"><div class="tab-ic">&#128197;</div><div class="tab-lb">Calendar</div></div>
+    <div class="tab-i" onclick="swTab('tasks')"><div class="tab-ic">&#9745;</div><div class="tab-lb">Tasks</div></div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
 <script>
-// ========= FIREBASE CONFIG (BAKED IN) =========
-firebase.initializeApp({
-  apiKey: "AIzaSyDMsL5kyKDSVakihwvgrgtOqFlVObDehpw",
-  authDomain: "booktok-46e7a.firebaseapp.com",
-  databaseURL: "https://booktok-46e7a-default-rtdb.firebaseio.com",
-  projectId: "booktok-46e7a",
-  storageBucket: "booktok-46e7a.firebasestorage.app",
-  messagingSenderId: "749806717436",
-  appId: "1:749806717436:web:672e38f0bc13532fb74a79"
-});
+firebase.initializeApp({apiKey:"AIzaSyDMsL5kyKDSVakihwvgrgtOqFlVObDehpw",authDomain:"booktok-46e7a.firebaseapp.com",databaseURL:"https://booktok-46e7a-default-rtdb.firebaseio.com",projectId:"booktok-46e7a",storageBucket:"booktok-46e7a.firebasestorage.app",messagingSenderId:"749806717436",appId:"1:749806717436:web:672e38f0bc13532fb74a79"});
+const au=firebase.auth(),db=firebase.database();
 
-const auth = firebase.auth();
-const db = firebase.database();
-
-// ========= DATA =========
-const AUTHORS = [
-  { id: 'lysbookish', handle: '@lysbookish', init: 'LB', project: 'RE', name: 'Lys' },
-  { id: 'vedarosebooks', handle: '@vedarosebooks', init: 'VR', project: 'RE', name: 'Veda' },
-  { id: 'lexiasherbooks', handle: '@lexiasherbooks', init: 'LA', project: 'RE', name: 'Lexi' },
-  { id: 'zaralibrary', handle: '@zaralibrary', init: 'ZL', project: 'DK', name: 'Zara' },
-  { id: 'lilablairbooks', handle: '@lilablairbooks', init: 'LB', project: 'DK', name: 'Lila' },
-  { id: 'larahartbooks', handle: '@larahartbooks', init: 'LH', project: 'PV', name: 'Lara' },
-  { id: 'livravenbooks', handle: '@livravenbooks', init: 'LR', project: 'PV', name: 'Liv' },
+const AUTHORS=[
+  {id:'lysbookish',handle:'@lysbookish',init:'LB',project:'RE',name:'Lys'},
+  {id:'vedarosebooks',handle:'@vedarosebooks',init:'VR',project:'RE',name:'Veda'},
+  {id:'lexiasherbooks',handle:'@lexiasherbooks',init:'LA',project:'RE',name:'Lexi'},
+  {id:'zaralibrary',handle:'@zaralibrary',init:'ZL',project:'DK',name:'Zara'},
+  {id:'lilablairbooks',handle:'@lilablairbooks',init:'LB',project:'DK',name:'Lila'},
+  {id:'larahartbooks',handle:'@larahartbooks',init:'LH',project:'PV',name:'Lara'},
+  {id:'livravenbooks',handle:'@livravenbooks',init:'LR',project:'PV',name:'Liv'},
 ];
-
-const PROJECTS = {
-  RE: { name: 'Project RE', color: '#e85d3a' },
-  DK: { name: 'Project DK', color: '#6366f1' },
-  PV: { name: 'Project PV', color: '#d946a8' },
-};
-
-const HASHTAG_BANK = [
-  '#booktok','#bookish','#bookrecommendations','#booklover','#bookworm',
-  '#darkromance','#spicybooks','#romancebooks','#booktokfyp','#reading',
-  '#newrelease','#kindleunlimited','#bookseries','#mustread','#bookobsessed',
-  '#enemies2lovers','#morallygrey','#alphamale','#possessivehero','#forcedproximity',
-  '#kindlereads','#bookstoread','#5starread','#bookclub','#readersoftiktok',
-  '#romantasy','#fantasyromance','#paranormalromance','#reverseharems','#whychoose'
-];
-
-// ========= STATE =========
-let user = null;
-let isSignUp = false;
-let currentTab = 'accounts';
-let currentAuthor = null;
-let currentPostId = null;
-let currentFilter = 'all';
-let postsCache = {};
-let allPosts = {};
-let editorImages = [];
-let selectedStatus = 'draft';
-let calMonth = new Date().getMonth();
-let calYear = new Date().getFullYear();
-let calFilter = 'all';
-let navStack = [];
-
-// ========= AUTH =========
-function toggleAuth() {
-  isSignUp = !isSignUp;
-  document.getElementById('authBtn').textContent = isSignUp ? 'Create Account' : 'Sign In';
-  document.getElementById('authSwitch').innerHTML = isSignUp
-    ? 'Have an account? <a onclick="toggleAuth()">Sign in</a>'
-    : 'No account? <a onclick="toggleAuth()">Create one</a>';
-  document.getElementById('authError').textContent = '';
-}
-
-async function handleAuth() {
-  const email = document.getElementById('authEmail').value.trim();
-  const pass = document.getElementById('authPass').value;
-  const err = document.getElementById('authError');
-  const btn = document.getElementById('authBtn');
-  if (!email || !pass) { err.textContent = 'Please fill in all fields'; return; }
-  btn.innerHTML = '<span class="spinner"></span>';
-  btn.disabled = true;
-  try {
-    if (isSignUp) await auth.createUserWithEmailAndPassword(email, pass);
-    else await auth.signInWithEmailAndPassword(email, pass);
-  } catch (e) {
-    const msgs = {
-      'auth/wrong-password': 'Invalid email or password',
-      'auth/user-not-found': 'Invalid email or password',
-      'auth/invalid-credential': 'Invalid email or password',
-      'auth/email-already-in-use': 'Email already registered',
-      'auth/weak-password': 'Password must be at least 6 characters',
-      'auth/invalid-email': 'Invalid email address',
-    };
-    err.textContent = msgs[e.code] || 'Something went wrong';
-    btn.textContent = isSignUp ? 'Create Account' : 'Sign In';
-    btn.disabled = false;
-  }
-}
-
-auth.onAuthStateChanged(u => {
-  if (u) {
-    user = u;
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('app').classList.add('active');
-    loadAllPosts();
-    switchTab('accounts');
-  } else {
-    user = null;
-    document.getElementById('authScreen').style.display = 'flex';
-    document.getElementById('app').classList.remove('active');
-    document.getElementById('authBtn').textContent = isSignUp ? 'Create Account' : 'Sign In';
-    document.getElementById('authBtn').disabled = false;
-  }
-});
-
-function signOut() { auth.signOut(); }
-
-// ========= LOAD ALL POSTS (for calendar) =========
-function loadAllPosts() {
-  if (!user) return;
-  db.ref(`users/${user.uid}/posts`).on('value', snap => {
-    allPosts = snap.val() || {};
-    // refresh current view if needed
-    if (currentTab === 'calendar') renderCalendar();
-    if (currentTab === 'accounts') renderAccounts();
-    if (currentAuthor) renderAuthorPosts();
-  });
-  loadTasks();
-}
-
-// ========= TAB SWITCHING =========
-function switchTab(tab) {
-  currentTab = tab;
-  currentAuthor = null;
-  currentPostId = null;
-  navStack = [];
-
-  document.querySelectorAll('.page, .editor-page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-item').forEach((t, i) => {
-    t.classList.toggle('active', ['accounts','calendar','tasks'][i] === tab);
-  });
-
-  document.getElementById('navBack').style.display = 'none';
-  document.getElementById('navBrand').style.display = 'block';
-  document.getElementById('navTitle').style.display = 'none';
-  document.getElementById('fab').classList.remove('show');
-  document.getElementById('bottomTabs').style.display = 'flex';
-
-  if (tab === 'accounts') {
-    document.getElementById('pageAccounts').classList.add('active');
-    renderAccounts();
-  } else if (tab === 'calendar') {
-    document.getElementById('pageCalendar').classList.add('active');
-    renderCalendar();
-  } else if (tab === 'tasks') {
-    document.getElementById('pageTasks').classList.add('active');
-    renderTasks();
-  }
-}
-
-function showAuthor(authorId) {
-  currentAuthor = AUTHORS.find(a => a.id === authorId);
-  currentFilter = 'all';
-  navStack.push('author');
-
-  document.querySelectorAll('.page, .editor-page').forEach(p => p.classList.remove('active'));
-  document.getElementById('pageAuthor').classList.add('active');
-  document.getElementById('navBack').style.display = 'flex';
-  document.getElementById('navBrand').style.display = 'none';
-  document.getElementById('navTitle').style.display = 'block';
-  document.getElementById('navTitle').textContent = currentAuthor.name;
-  document.getElementById('fab').classList.add('show');
-
-  renderAuthorView();
-}
-
-function showEditor(postId) {
-  currentPostId = postId || null;
-  navStack.push('editor');
-
-  document.querySelectorAll('.page, .editor-page').forEach(p => p.classList.remove('active'));
-  document.getElementById('pageEditor').classList.add('active');
-  document.getElementById('navBack').style.display = 'flex';
-  document.getElementById('navBrand').style.display = 'none';
-  document.getElementById('navTitle').style.display = 'block';
-  document.getElementById('navTitle').textContent = postId ? 'Edit Post' : 'New Post';
-  document.getElementById('fab').classList.remove('show');
-  document.getElementById('bottomTabs').style.display = 'none';
-
-  renderEditor();
-}
-
-function goBack() {
-  navStack.pop();
-  const prev = navStack[navStack.length - 1];
-
-  if (prev === 'author' && currentAuthor) {
-    document.querySelectorAll('.page, .editor-page').forEach(p => p.classList.remove('active'));
-    document.getElementById('pageAuthor').classList.add('active');
-    document.getElementById('navTitle').textContent = currentAuthor.name;
-    document.getElementById('fab').classList.add('show');
-    document.getElementById('bottomTabs').style.display = 'flex';
-    renderAuthorView();
-  } else {
-    currentAuthor = null;
-    currentPostId = null;
-    navStack = [];
-    document.getElementById('bottomTabs').style.display = 'flex';
-    switchTab(currentTab);
-  }
-}
-
-function newPost() { showEditor(null); }
-
-// ========= ACCOUNTS PAGE =========
-function renderAccounts() {
-  const el = document.getElementById('pageAccounts');
-  const grouped = {};
-  AUTHORS.forEach(a => { if (!grouped[a.project]) grouped[a.project] = []; grouped[a.project].push(a); });
-
-  let html = `
-    <div class="section-header">
-      <div>
-        <div class="section-title">Accounts</div>
-        <div class="section-subtitle">7 BookTok accounts</div>
-      </div>
-    </div>
-  `;
-
-  for (const [proj, authors] of Object.entries(grouped)) {
-    html += `<div class="account-group">
-      <div class="group-label">
-        <div class="group-dot" style="background:${PROJECTS[proj].color}"></div>
-        <div class="group-name">${PROJECTS[proj].name}</div>
-      </div>
-      <div class="account-list">`;
-
-    for (const a of authors) {
-      const posts = allPosts[a.id] || {};
-      let d=0, r=0, p=0;
-      Object.values(posts).forEach(x => { if(x.status==='draft')d++; else if(x.status==='ready')r++; else if(x.status==='posted')p++; });
-
-      html += `
-        <div class="account-card" onclick="showAuthor('${a.id}')">
-          <div class="account-avatar" style="background:${PROJECTS[a.project].color}">${a.init}</div>
-          <div class="account-info">
-            <div class="account-handle">${a.handle}</div>
-            <div class="account-counts">
-              <span class="count-pill draft">${d} draft${d!==1?'s':''}</span>
-              <span class="count-pill ready">${r} ready</span>
-              ${p ? `<span class="count-pill posted">${p} posted</span>` : ''}
-            </div>
-          </div>
-          <div class="account-arrow">&#8250;</div>
-        </div>`;
-    }
-    html += '</div></div>';
-  }
-  el.innerHTML = html;
-}
-
-// ========= CALENDAR PAGE =========
-function renderCalendar() {
-  const el = document.getElementById('pageCalendar');
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-  // Gather all scheduled posts
-  const scheduled = [];
-  for (const [authorId, posts] of Object.entries(allPosts)) {
-    for (const [pid, p] of Object.entries(posts)) {
-      if (p.scheduledDate) {
-        scheduled.push({ ...p, authorId, pid });
-      }
-    }
-  }
-
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevDays = new Date(calYear, calMonth, 0).getDate();
-  const today = new Date();
-
-  // Filter chips
-  let filterHtml = `<div class="cal-filter">
-    <div class="cal-filter-chip ${calFilter==='all'?'active':''}" onclick="setCalFilter('all')">All</div>`;
-  AUTHORS.forEach(a => {
-    filterHtml += `<div class="cal-filter-chip ${calFilter===a.id?'active':''}" onclick="setCalFilter('${a.id}')">${a.name}</div>`;
-  });
-  filterHtml += '</div>';
-
-  let calDaysHtml = '';
-  let dayCount = 1;
-  let nextCount = 1;
-  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
-
-  for (let i = 0; i < totalCells; i++) {
-    let dayNum, isOther = false, dateStr = '';
-    if (i < firstDay) {
-      dayNum = prevDays - firstDay + i + 1;
-      isOther = true;
-      const pm = calMonth === 0 ? 11 : calMonth - 1;
-      const py = calMonth === 0 ? calYear - 1 : calYear;
-      dateStr = `${py}-${String(pm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-    } else if (dayCount > daysInMonth) {
-      dayNum = nextCount++;
-      isOther = true;
-      const nm = calMonth === 11 ? 0 : calMonth + 1;
-      const ny = calMonth === 11 ? calYear + 1 : calYear;
-      dateStr = `${ny}-${String(nm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-    } else {
-      dayNum = dayCount++;
-      dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-    }
-
-    const isToday = !isOther && dayNum === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
-    const dayPosts = scheduled.filter(p => p.scheduledDate === dateStr && (calFilter === 'all' || p.authorId === calFilter));
-
-    calDaysHtml += `<div class="cal-day ${isOther?'other-month':''} ${isToday?'today':''}">
-      <div class="cal-day-num">${dayNum}</div>
-      ${dayPosts.length ? `<div class="cal-dot-row">${dayPosts.map(p => `<div class="cal-post-dot ${p.status||'draft'}"></div>`).join('')}</div>` : ''}
-    </div>`;
-  }
-
-  el.innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Calendar</div>
-    </div>
-    ${filterHtml}
-    <div class="cal-header">
-      <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="changeMonth(-1)">&#8249;</button>
-        <div class="cal-month">${months[calMonth]} ${calYear}</div>
-        <button class="cal-nav-btn" onclick="changeMonth(1)">&#8250;</button>
-      </div>
-      <button class="cal-today-btn" onclick="goToday()">Today</button>
-    </div>
-    <div class="cal-grid">
-      <div class="cal-weekdays">${days.map(d => `<div class="cal-weekday">${d}</div>`).join('')}</div>
-      <div class="cal-days">${calDaysHtml}</div>
-    </div>
-    <div class="cal-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--status-draft)"></div>Draft</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--status-ready)"></div>Ready</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--status-posted)"></div>Posted</div>
-    </div>
-  `;
-}
-
-function changeMonth(d) { calMonth += d; if (calMonth > 11) { calMonth = 0; calYear++; } if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
-function goToday() { const t = new Date(); calMonth = t.getMonth(); calYear = t.getFullYear(); renderCalendar(); }
-function setCalFilter(f) { calFilter = f; renderCalendar(); }
-
-// ========= TASKS PAGE =========
-let tasks = [];
-
-function loadTasks() {
-  if (!user) return;
-  db.ref(`users/${user.uid}/tasks`).on('value', snap => {
-    const data = snap.val() || {};
-    tasks = Object.entries(data).map(([id, t]) => ({ id, ...t })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    if (currentTab === 'tasks') renderTasks();
-  });
-}
-
-function renderTasks() {
-  const el = document.getElementById('pageTasks');
-  const pending = tasks.filter(t => !t.done);
-  const done = tasks.filter(t => t.done);
-
-  el.innerHTML = `
-    <div class="section-header">
-      <div>
-        <div class="section-title">Tasks</div>
-        <div class="section-subtitle">${pending.length} pending</div>
-      </div>
-    </div>
-    <div class="tasks-add-row">
-      <input class="tasks-input" id="taskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()">
-      <button class="tasks-add-btn" onclick="addTask()">Add</button>
-    </div>
-    ${pending.length ? `<div class="task-list">${pending.map(taskHtml).join('')}</div>` : ''}
-    ${done.length ? `
-      <div class="tasks-section-label">Completed (${done.length})</div>
-      <div class="task-list">${done.map(taskHtml).join('')}</div>
-    ` : ''}
-    ${!tasks.length ? '<div class="empty"><div class="empty-icon">&#9745;</div><div class="empty-text">No tasks yet</div><div class="empty-sub">Add tasks to track your workflow</div></div>' : ''}
-  `;
-}
-
-function taskHtml(t) {
-  return `<div class="task-card ${t.done ? 'done' : ''}">
-    <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask('${t.id}')">${t.done ? '&#10003;' : ''}</div>
-    <div class="task-content">
-      <div class="task-text">${esc(t.text)}</div>
-      ${t.author ? `<div class="task-meta"><span class="task-tag">${esc(t.author)}</span></div>` : ''}
-    </div>
-    <div class="task-delete" onclick="deleteTask('${t.id}')">&#10005;</div>
-  </div>`;
-}
-
-function addTask() {
-  const input = document.getElementById('taskInput');
-  const text = input.value.trim();
-  if (!text || !user) return;
-  const id = db.ref().push().key;
-  db.ref(`users/${user.uid}/tasks/${id}`).set({ text, done: false, createdAt: Date.now() });
-  input.value = '';
-}
-
-function toggleTask(id) {
-  const t = tasks.find(x => x.id === id);
-  if (t && user) db.ref(`users/${user.uid}/tasks/${id}/done`).set(!t.done);
-}
-
-function deleteTask(id) {
-  if (user) db.ref(`users/${user.uid}/tasks/${id}`).remove();
-}
-
-// ========= AUTHOR VIEW =========
-function renderAuthorView() {
-  const el = document.getElementById('pageAuthor');
-  const a = currentAuthor;
-
-  el.innerHTML = `
-    <div class="author-banner">
-      <div class="author-big-avatar" style="background:${PROJECTS[a.project].color}">${a.init}</div>
-      <div class="author-banner-info">
-        <h2>${a.handle}</h2>
-        <p>${PROJECTS[a.project].name}</p>
-      </div>
-    </div>
-    <div class="filter-row">
-      ${['all','draft','ready','posted'].map(f => `<div class="filter-pill ${currentFilter===f?'active':''}" onclick="setFilter('${f}')">${f==='all'?'All':f.charAt(0).toUpperCase()+f.slice(1)}</div>`).join('')}
-    </div>
-    <div class="post-list" id="postList">
-      <div style="text-align:center;padding:30px"><span class="spinner"></span></div>
-    </div>
-  `;
-
-  renderAuthorPosts();
-}
-
-function setFilter(f) { currentFilter = f; renderAuthorView(); }
-
-function renderAuthorPosts() {
-  const list = document.getElementById('postList');
-  if (!list || !currentAuthor) return;
-
-  const data = allPosts[currentAuthor.id] || {};
-  postsCache = data;
-
-  const posts = Object.entries(data)
-    .map(([id, p]) => ({ id, ...p }))
-    .filter(p => currentFilter === 'all' || p.status === currentFilter)
-    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-
-  if (!posts.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">&#128214;</div><div class="empty-text">No posts yet</div><div class="empty-sub">Tap + to create your first post</div></div>';
-    return;
-  }
-
-  list.innerHTML = posts.map(p => `
-    <div class="post-card" onclick="showEditor('${p.id}')">
-      <div class="post-top">
-        <div class="post-hook">${esc(p.hook || 'Untitled')}</div>
-        <div class="status-tag ${p.status || 'draft'}">${p.status || 'draft'}</div>
-      </div>
-      ${p.caption ? `<div class="post-preview">${esc(p.caption)}</div>` : ''}
-      ${p.images?.length ? `<div class="post-thumbs">${p.images.slice(0,4).map(img => `<img class="post-thumb" src="${img}" alt="">`).join('')}${p.images.length>4?`<div class="post-thumb" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted)">+${p.images.length-4}</div>`:''}</div>` : ''}
-      <div class="post-footer">
-        ${p.scheduledDate ? `<span class="post-meta-tag">&#128197; ${p.scheduledDate}</span>` : ''}
-        ${p.hashtags ? `<span class="post-meta-tag"># ${(p.hashtags.match(/#/g)||[]).length} tags</span>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-// ========= EDITOR =========
-function renderEditor() {
-  const el = document.getElementById('pageEditor');
-  const p = currentPostId && postsCache[currentPostId] ? postsCache[currentPostId] : {};
-  editorImages = [...(p.images || [])];
-  selectedStatus = p.status || 'draft';
-
-  const selTags = (p.hashtags || '').split(/\s+/).filter(t => t.startsWith('#'));
-
-  el.innerHTML = `
-    <div class="ed-section">
-      <div class="ed-label">&#128247; Slides</div>
-      <div class="dropzone" id="dropzone" onclick="document.getElementById('fileIn').click()">
-        <div class="dropzone-icon">&#128194;</div>
-        <div class="dropzone-text">Drop images, <b>browse</b>, or paste (Ctrl+V)</div>
-        <input type="file" id="fileIn" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
-      </div>
-      <div class="img-gallery" id="imgGallery">${editorImages.map((img,i) => imgHtml(img,i)).join('')}</div>
-    </div>
-
-    <div class="ed-section">
-      <div class="ed-row"><div class="ed-label" style="flex:1;margin:0">&#127a5; Hook</div><button class="copy-btn" onclick="copyF('hookIn',this)">Copy</button></div>
-      <textarea class="ed-textarea sm" id="hookIn" placeholder="Opening hook...">${esc(p.hook||'')}</textarea>
-    </div>
-
-    <div class="ed-section">
-      <div class="ed-row"><div class="ed-label" style="flex:1;margin:0">&#128172; Caption</div><button class="copy-btn" onclick="copyF('capIn',this)">Copy</button></div>
-      <textarea class="ed-textarea" id="capIn" placeholder="Full caption...">${esc(p.caption||'')}</textarea>
-    </div>
-
-    <div class="ed-section">
-      <div class="ed-row"><div class="ed-label" style="flex:1;margin:0"># Hashtags</div><button class="copy-btn" onclick="copyF('tagIn',this)">Copy</button></div>
-      <textarea class="ed-textarea sm" id="tagIn" placeholder="#booktok #darkromance...">${esc(p.hashtags||'')}</textarea>
-      <div class="tag-bank">${HASHTAG_BANK.map(t => `<div class="tag-chip ${selTags.includes(t)?'active':''}" onclick="togTag(this,'${t}')">${t}</div>`).join('')}</div>
-    </div>
-
-    <div class="ed-section">
-      <button class="copy-all" onclick="copyAll()">&#128203; Copy All</button>
-    </div>
-
-    <div class="ed-section">
-      <div class="ed-label">&#128197; Schedule</div>
-      <div class="sched-row">
-        <input class="ed-input" type="date" id="schedDate" value="${p.scheduledDate||''}">
-        <input class="ed-input" type="time" id="schedTime" value="${p.scheduledTime||''}">
-      </div>
-    </div>
-
-    <div class="ed-section">
-      <div class="ed-label">Status</div>
-      <div class="status-picker">
-        <div class="status-opt ${selectedStatus==='draft'?'active':''}" data-s="draft" onclick="pickStatus(this,'draft')">Draft</div>
-        <div class="status-opt ${selectedStatus==='ready'?'active':''}" data-s="ready" onclick="pickStatus(this,'ready')">Ready</div>
-        <div class="status-opt ${selectedStatus==='posted'?'active':''}" data-s="posted" onclick="pickStatus(this,'posted')">Posted</div>
-      </div>
-    </div>
-
-    <div class="ed-section">
-      <div class="collapse-head" onclick="togCollapse(this)">
-        <div class="ed-label" style="margin:0">&#128221; Notes</div>
-        <span class="arr">&#9660;</span>
-      </div>
-      <div class="collapse-body">
-        <textarea class="ed-textarea sm" id="notesIn" placeholder="Internal notes...">${esc(p.notes||'')}</textarea>
-      </div>
-    </div>
-
-    <div class="ed-section">
-      <div class="collapse-head" onclick="togCollapse(this)">
-        <div class="ed-label" style="margin:0">&#128218; Context</div>
-        <span class="arr">&#9660;</span>
-      </div>
-      <div class="collapse-body">
-        <textarea class="ed-textarea sm" id="ctxIn" placeholder="Book title, tropes...">${esc(p.context||'')}</textarea>
-      </div>
-    </div>
-
-    <div style="height:70px"></div>
-    <div class="save-bar">
-      ${currentPostId ? '<button class="save-btn outline" onclick="delPost()">Delete</button>' : ''}
-      <button class="save-btn primary" onclick="savePost()">Save</button>
-    </div>
-  `;
-
-  setupDrop();
-  setupPaste();
-}
-
-function imgHtml(src, i) {
-  return `<div class="img-item">
-    <img src="${src}" alt="">
-    <button class="img-save" onclick="event.stopPropagation();dlImg(${i})" title="Save">&#8595;</button>
-    <button class="img-remove" onclick="event.stopPropagation();rmImg(${i})" title="Remove">&#10005;</button>
-  </div>`;
-}
-
-function refreshGallery() {
-  const g = document.getElementById('imgGallery');
-  if (g) g.innerHTML = editorImages.map((img,i) => imgHtml(img,i)).join('');
-}
-
-async function handleFiles(files) {
-  for (const f of files) {
-    if (!f.type.startsWith('image/')) continue;
-    editorImages.push(await toDataUrl(f));
-  }
-  refreshGallery();
-}
-
-function toDataUrl(f) { return new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(f); }); }
-function rmImg(i) { editorImages.splice(i,1); refreshGallery(); }
-function dlImg(i) { const a = document.createElement('a'); a.href = editorImages[i]; a.download = `slide-${i+1}.png`; a.click(); }
-
-function setupDrop() {
-  const z = document.getElementById('dropzone');
-  if (!z) return;
-  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('over'); });
-  z.addEventListener('dragleave', () => z.classList.remove('over'));
-  z.addEventListener('drop', async e => { e.preventDefault(); z.classList.remove('over'); await handleFiles(e.dataTransfer.files); });
-}
-
-function setupPaste() {
-  document.onpaste = async e => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        editorImages.push(await toDataUrl(item.getAsFile()));
-        refreshGallery();
-      }
-    }
-  };
-}
-
-function togTag(chip, tag) {
-  const inp = document.getElementById('tagIn');
-  const cur = inp.value.trim().split(/\s+/).filter(t => t.startsWith('#'));
-  if (cur.includes(tag)) {
-    inp.value = cur.filter(t => t !== tag).join(' ');
-    chip.classList.remove('active');
-  } else {
-    inp.value = (inp.value.trim() ? inp.value.trim() + ' ' : '') + tag;
-    chip.classList.add('active');
-  }
-}
-
-function pickStatus(el, s) {
-  selectedStatus = s;
-  document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function togCollapse(h) { h.classList.toggle('open'); h.nextElementSibling.classList.toggle('open'); }
-
-function copyF(id, btn) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  navigator.clipboard.writeText(el.value).then(() => {
-    btn.classList.add('copied'); btn.textContent = 'Copied!';
-    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1500);
-  });
-}
-
-function copyAll() {
-  const h = document.getElementById('hookIn')?.value || '';
-  const c = document.getElementById('capIn')?.value || '';
-  const t = document.getElementById('tagIn')?.value || '';
-  navigator.clipboard.writeText([h,c,t].filter(Boolean).join('\n\n')).then(() => toast('Copied hook + caption + hashtags'));
-}
-
-async function savePost() {
-  if (!user || !currentAuthor) return;
-  const data = {
-    hook: document.getElementById('hookIn')?.value || '',
-    caption: document.getElementById('capIn')?.value || '',
-    hashtags: document.getElementById('tagIn')?.value || '',
-    scheduledDate: document.getElementById('schedDate')?.value || '',
-    scheduledTime: document.getElementById('schedTime')?.value || '',
-    status: selectedStatus,
-    notes: document.getElementById('notesIn')?.value || '',
-    context: document.getElementById('ctxIn')?.value || '',
-    images: editorImages,
-    updatedAt: Date.now(),
-  };
-  const pid = currentPostId || db.ref().push().key;
-  try {
-    await db.ref(`users/${user.uid}/posts/${currentAuthor.id}/${pid}`).set(data);
-    postsCache[pid] = data;
-    currentPostId = pid;
-    toast('Saved!');
-  } catch (e) { toast('Error: ' + e.message); }
-}
-
-async function delPost() {
-  if (!user || !currentAuthor || !currentPostId) return;
-  if (!confirm('Delete this post?')) return;
-  try {
-    await db.ref(`users/${user.uid}/posts/${currentAuthor.id}/${currentPostId}`).remove();
-    delete postsCache[currentPostId];
-    toast('Deleted');
-    goBack();
-  } catch (e) { toast('Error: ' + e.message); }
-}
-
-// ========= UTILS =========
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+const PROJ={RE:{name:'Project RE',color:'#e85d3a'},DK:{name:'Project DK',color:'#6366f1'},PV:{name:'Project PV',color:'#d946a8'}};
+const HTAGS=['#booktok','#bookish','#bookrecommendations','#booklover','#bookworm','#darkromance','#spicybooks','#romancebooks','#booktokfyp','#reading','#newrelease','#kindleunlimited','#bookseries','#mustread','#bookobsessed','#enemies2lovers','#morallygrey','#alphamale','#possessivehero','#forcedproximity','#kindlereads','#bookstoread','#5starread','#bookclub','#readersoftiktok','#romantasy','#fantasyromance','#paranormalromance','#reverseharems','#whychoose'];
+const TASK_CATS=['Batch','Draft','Post'];
+const PROJ_KEYS=['RE','DK','PV'];
+
+let user=null,isSignUp=false,curTab='accounts',curAuthor=null,curPostId=null,curFilter='all',postsCache={},allPosts={},edImgs=[],selStatus='draft',calMo=new Date().getMonth(),calYr=new Date().getFullYear(),calFilt='all',navStack=[],profilePics={};
+
+// AUTH
+function togAuth(){isSignUp=!isSignUp;document.getElementById('authBtn').textContent=isSignUp?'Create Account':'Sign In';document.getElementById('authSw').innerHTML=isSignUp?'Have an account? <a onclick="togAuth()">Sign in</a>':'No account? <a onclick="togAuth()">Create one</a>';document.getElementById('authErr').textContent=''}
+async function handleAuth(){const e=document.getElementById('authEmail').value.trim(),p=document.getElementById('authPass').value,er=document.getElementById('authErr'),b=document.getElementById('authBtn');if(!e||!p){er.textContent='Please fill in all fields';return}b.innerHTML='<span class="spinner"></span>';b.disabled=true;try{if(isSignUp)await au.createUserWithEmailAndPassword(e,p);else await au.signInWithEmailAndPassword(e,p)}catch(x){const m={'auth/wrong-password':'Invalid email or password','auth/user-not-found':'Invalid email or password','auth/invalid-credential':'Invalid email or password','auth/email-already-in-use':'Email already registered','auth/weak-password':'Password must be at least 6 characters','auth/invalid-email':'Invalid email address'};er.textContent=m[x.code]||'Something went wrong';b.textContent=isSignUp?'Create Account':'Sign In';b.disabled=false}}
+au.onAuthStateChanged(u=>{if(u){user=u;document.getElementById('authScreen').style.display='none';document.getElementById('app').classList.add('active');loadAll();swTab('accounts')}else{user=null;document.getElementById('authScreen').style.display='flex';document.getElementById('app').classList.remove('active');document.getElementById('authBtn').textContent=isSignUp?'Create Account':'Sign In';document.getElementById('authBtn').disabled=false}});
+function signOut(){au.signOut()}
+
+function loadAll(){if(!user)return;db.ref(`users/${user.uid}/posts`).on('value',s=>{allPosts=s.val()||{};if(curTab==='calendar')renderCal();if(curTab==='accounts')renderAcc();if(curAuthor)renderAuthorPosts()});db.ref(`users/${user.uid}/profilePics`).on('value',s=>{profilePics=s.val()||{};if(curTab==='accounts')renderAcc()});loadTasks()}
+
+// TABS
+function swTab(t){curTab=t;curAuthor=null;curPostId=null;navStack=[];document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-i').forEach((x,i)=>x.classList.toggle('active',['accounts','calendar','tasks'][i]===t));document.getElementById('navBack').style.display='none';document.getElementById('navBrand').style.display='block';document.getElementById('navTitle').style.display='none';document.getElementById('fab').classList.remove('show');document.getElementById('btabs').style.display='flex';if(t==='accounts'){document.getElementById('pgAcc').classList.add('active');renderAcc()}else if(t==='calendar'){document.getElementById('pgCal').classList.add('active');renderCal()}else if(t==='tasks'){document.getElementById('pgTask').classList.add('active');renderTasks()}}
+
+function showAuth2(aid){curAuthor=AUTHORS.find(a=>a.id===aid);curFilter='all';navStack.push('author');document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.getElementById('pgAuth').classList.add('active');document.getElementById('navBack').style.display='flex';document.getElementById('navBrand').style.display='none';document.getElementById('navTitle').style.display='block';document.getElementById('navTitle').textContent=curAuthor.name;document.getElementById('fab').classList.add('show');renderAuthView()}
+
+function showEd(pid,authId){if(authId&&!curAuthor)curAuthor=AUTHORS.find(a=>a.id===authId);curPostId=pid||null;navStack.push('editor');document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.getElementById('pgEdit').classList.add('active');document.getElementById('navBack').style.display='flex';document.getElementById('navBrand').style.display='none';document.getElementById('navTitle').style.display='block';document.getElementById('navTitle').textContent=pid?'Edit Post':'New Post';document.getElementById('fab').classList.remove('show');document.getElementById('btabs').style.display='none';renderEd()}
+
+function goBack(){navStack.pop();const prev=navStack[navStack.length-1];if(prev==='author'&&curAuthor){document.querySelectorAll('.page,.ed-page').forEach(p=>p.classList.remove('active'));document.getElementById('pgAuth').classList.add('active');document.getElementById('navTitle').textContent=curAuthor.name;document.getElementById('fab').classList.add('show');document.getElementById('btabs').style.display='flex';renderAuthView()}else{curAuthor=null;curPostId=null;navStack=[];document.getElementById('btabs').style.display='flex';swTab(curTab)}}
+function newPost(){showEd(null)}
+
+// ACCOUNTS
+function renderAcc(){const el=document.getElementById('pgAcc');const grp={};AUTHORS.forEach(a=>{if(!grp[a.project])grp[a.project]=[];grp[a.project].push(a)});let h=`<div class="sec-hd"><div><div class="sec-t">Accounts</div><div class="sec-st">7 BookTok accounts</div></div></div>`;for(const[proj,auths]of Object.entries(grp)){h+=`<div class="acc-grp"><div class="grp-lb"><div class="grp-dot" style="background:${PROJ[proj].color}"></div><div class="grp-nm">${PROJ[proj].name}</div></div><div class="acc-list">`;for(const a of auths){const ps=allPosts[a.id]||{};let d=0,r=0,p=0;Object.values(ps).forEach(x=>{if(x.status==='draft')d++;else if(x.status==='ready')r++;else if(x.status==='posted')p++});const pic=profilePics[a.id];h+=`<div class="acc-card" onclick="showAuth2('${a.id}')"><div class="pfp-upload" style="position:relative"><div class="acc-av" style="background:${PROJ[a.project].color}">${pic?`<img src="${pic}" alt="">`:`${a.init}`}</div><input type="file" accept="image/*" onclick="event.stopPropagation()" onchange="uploadPfp('${a.id}',this.files[0])"><div class="pfp-badge">&#9998;</div></div><div class="acc-info"><div class="acc-handle">${a.handle}</div><div class="acc-counts"><span class="cnt-pill draft">${d} draft${d!==1?'s':''}</span><span class="cnt-pill ready">${r} ready</span>${p?`<span class="cnt-pill posted">${p} posted</span>`:''}</div></div><div class="acc-arrow">&#8250;</div></div>`}h+='</div></div>'}el.innerHTML=h}
+
+async function uploadPfp(aid,file){if(!file||!user)return;const url=await toDataUrl(file);await db.ref(`users/${user.uid}/profilePics/${aid}`).set(url);toast('Profile pic updated!')}
+
+// CALENDAR
+function renderCal(){const el=document.getElementById('pgCal');const mos=['January','February','March','April','May','June','July','August','September','October','November','December'];const dys=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const sched=[];for(const[aid,posts]of Object.entries(allPosts)){const a=AUTHORS.find(x=>x.id===aid);if(!a)continue;for(const[pid,p]of Object.entries(posts)){if(p.scheduledDate)sched.push({...p,authorId:aid,pid,authorName:a.name,project:a.project})}}
+const fd=new Date(calYr,calMo,1).getDay(),dim=new Date(calYr,calMo+1,0).getDate(),pd=new Date(calYr,calMo,0).getDate(),today=new Date();
+let fh=`<div class="cal-filter"><div class="cal-chip ${calFilt==='all'?'active':''}" onclick="setCF('all')">All</div>`;AUTHORS.forEach(a=>{fh+=`<div class="cal-chip ${calFilt===a.id?'active':''}" onclick="setCF('${a.id}')">${a.name}</div>`});fh+='</div>';
+let cdh='',dc=1,nc=1;const tc=Math.ceil((fd+dim)/7)*7;
+for(let i=0;i<tc;i++){let dn,oth=false,ds='';if(i<fd){dn=pd-fd+i+1;oth=true;const pm=calMo===0?11:calMo-1,py=calMo===0?calYr-1:calYr;ds=`${py}-${String(pm+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`}else if(dc>dim){dn=nc++;oth=true;const nm=calMo===11?0:calMo+1,ny=calMo===11?calYr+1:calYr;ds=`${ny}-${String(nm+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`}else{dn=dc++;ds=`${calYr}-${String(calMo+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`}
+const ist=!oth&&dn===today.getDate()&&calMo===today.getMonth()&&calYr===today.getFullYear();
+const dp=sched.filter(p=>p.scheduledDate===ds&&(calFilt==='all'||p.authorId===calFilt));
+let itemsH='';
+if(calFilt==='all'){dp.forEach(p=>{itemsH+=`<div class="cal-item proj-${p.project.toLowerCase()}" onclick="event.stopPropagation();showEd('${p.pid}','${p.authorId}')">${p.authorName}</div>`})}else{dp.forEach(p=>{const thumb=p.images&&p.images[0]?`<img class="cal-thumb" src="${p.images[0]}" alt="">`:''
+itemsH+=`<div class="cal-item proj-${p.project.toLowerCase()}" onclick="event.stopPropagation();showEd('${p.pid}','${p.authorId}')">${thumb}<span style="overflow:hidden;text-overflow:ellipsis">${esc(p.hook||'Post')}</span></div>`})}
+cdh+=`<div class="cal-day ${oth?'oth':''} ${ist?'today':''}"><div class="cal-dn">${dn}</div>${itemsH}</div>`}
+el.innerHTML=`<div class="sec-hd"><div class="sec-t">Calendar</div></div>${fh}<div class="cal-hd"><div class="cal-nav"><button class="cal-nb" onclick="chMo(-1)">&#8249;</button><div class="cal-mo">${mos[calMo]} ${calYr}</div><button class="cal-nb" onclick="chMo(1)">&#8250;</button></div><button class="cal-today" onclick="goTd()">Today</button></div><div class="cal-grid"><div class="cal-wk">${dys.map(d=>`<div class="cal-wd">${d}</div>`).join('')}</div><div class="cal-days">${cdh}</div></div><div class="cal-legend"><div class="leg-i"><div class="leg-d" style="background:var(--re)"></div>RE</div><div class="leg-i"><div class="leg-d" style="background:var(--dk)"></div>DK</div><div class="leg-i"><div class="leg-d" style="background:var(--pv)"></div>PV</div></div>`}
+function chMo(d){calMo+=d;if(calMo>11){calMo=0;calYr++}if(calMo<0){calMo=11;calYr--}renderCal()}
+function goTd(){const t=new Date();calMo=t.getMonth();calYr=t.getFullYear();renderCal()}
+function setCF(f){calFilt=f;renderCal()}
+
+// TASKS
+let tasks=[];
+function loadTasks(){if(!user)return;db.ref(`users/${user.uid}/tasks2`).on('value',s=>{tasks=Object.entries(s.val()||{}).map(([id,t])=>({id,...t}));if(curTab==='tasks')renderTasks()})}
+
+function renderTasks(){const el=document.getElementById('pgTask');const todayStr=new Date().toISOString().split('T')[0];
+let h=`<div class="sec-hd"><div><div class="sec-t">Tasks</div><div class="sec-st">${tasks.filter(t=>!t.done).length} pending</div></div></div>`;
+
+TASK_CATS.forEach(cat=>{const catTasks=tasks.filter(t=>t.category===cat);const pending=catTasks.filter(t=>!t.done);const done=catTasks.filter(t=>t.done);
+h+=`<div class="task-cat"><div class="task-cat-hd open" onclick="togCat(this)"><div class="task-cat-title">${cat} <span class="task-cat-count">${pending.length}</span></div><div class="task-cat-arr">&#9660;</div></div><div class="task-cat-body open">`;
+
+PROJ_KEYS.forEach(pk=>{const subTasks=pending.filter(t=>t.project===pk);
+h+=`<div class="task-sub"><div class="task-sub-hd open" onclick="togSub(this)"><div class="task-sub-dot" style="background:${PROJ[pk].color}"></div><div class="task-sub-nm">${PROJ[pk].name}</div><span class="task-sub-arr">&#9660;</span></div><div class="task-sub-body open">`;
+subTasks.forEach(t=>{const dueClass=t.dueDate?(t.dueDate<todayStr?'overdue':t.dueDate===todayStr?'today-due':'future'):'';h+=taskItemH(t,dueClass)});
+h+=`<div class="task-add"><input class="task-add-in" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTask2('${cat}','${pk}',this)"><input class="task-add-date" type="date"><button class="task-add-btn" onclick="addTask2('${cat}','${pk}',this.parentElement.querySelector('.task-add-in'))">Add</button></div></div></div>`});
+
+if(done.length){h+=`<div class="task-completed-hd" onclick="togCompleted(this)">&#9662; Completed (${done.length})</div><div class="task-completed-body">`;done.forEach(t=>{const dueClass=t.dueDate?(t.dueDate<todayStr?'overdue':t.dueDate===todayStr?'today-due':'future'):'';h+=taskItemH(t,dueClass)});h+='</div>'}
+h+='</div></div>'});
+el.innerHTML=h}
+
+function taskItemH(t,dc){return`<div class="task-item ${t.done?'done':''}"><div class="task-chk ${t.done?'done':''}" onclick="togTask('${t.id}')">${t.done?'&#10003;':''}</div><div class="task-body"><div class="task-txt">${esc(t.text)}</div>${t.dueDate?`<div class="task-due ${dc}">${t.dueDate}</div>`:''}</div><div class="task-del" onclick="delTask('${t.id}')">&#10005;</div></div>`}
+
+function addTask2(cat,proj,input){const text=input.value.trim();if(!text||!user)return;const dateInput=input.parentElement.querySelector('.task-add-date');const dueDate=dateInput?dateInput.value:'';const id=db.ref().push().key;db.ref(`users/${user.uid}/tasks2/${id}`).set({text,done:false,category:cat,project:proj,dueDate,createdAt:Date.now()});input.value='';if(dateInput)dateInput.value=''}
+function togTask(id){const t=tasks.find(x=>x.id===id);if(t&&user)db.ref(`users/${user.uid}/tasks2/${id}/done`).set(!t.done)}
+function delTask(id){if(user)db.ref(`users/${user.uid}/tasks2/${id}`).remove()}
+function togCat(hd){hd.classList.toggle('open');hd.nextElementSibling.classList.toggle('open')}
+function togSub(hd){hd.classList.toggle('open');hd.nextElementSibling.classList.toggle('open')}
+function togCompleted(hd){hd.nextElementSibling.classList.toggle('open')}
+
+// AUTHOR VIEW
+function renderAuthView(){const el=document.getElementById('pgAuth');const a=curAuthor;const pic=profilePics[a.id];
+el.innerHTML=`<div class="auth-banner"><div class="auth-big-av" style="background:${PROJ[a.project].color}">${pic?`<img src="${pic}" alt="">`:`${a.init}`}</div><div class="auth-b-info"><h2>${a.handle}</h2><p>${PROJ[a.project].name}</p></div></div><div class="filt-row">${['all','draft','ready','posted'].map(f=>`<div class="filt-p ${curFilter===f?'active':''}" onclick="setFilt('${f}')">${f==='all'?'All':f[0].toUpperCase()+f.slice(1)}</div>`).join('')}</div><div class="post-grid" id="postGrid"><div style="text-align:center;padding:30px;grid-column:1/-1"><span class="spinner"></span></div></div>`;renderAuthorPosts()}
+function setFilt(f){curFilter=f;renderAuthView()}
+
+function renderAuthorPosts(){const g=document.getElementById('postGrid');if(!g||!curAuthor)return;const data=allPosts[curAuthor.id]||{};postsCache=data;const posts=Object.entries(data).map(([id,p])=>({id,...p})).filter(p=>curFilter==='all'||p.status===curFilter).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+if(!posts.length){g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-ic">&#128214;</div><div class="empty-t">No posts yet</div><div class="empty-s">Tap + to create your first post</div></div>';return}
+g.innerHTML=posts.map(p=>`<div class="p-card" onclick="showEd('${p.id}')"><div class="p-card-img">${p.images&&p.images[0]?`<img src="${p.images[0]}" alt="">`:'<div class="no-img">&#128214;</div>'}<div class="p-card-status ${p.status||'draft'}">${p.status||'draft'}</div></div><div class="p-card-body"><div class="p-card-hook">${esc(p.hook||'Untitled')}</div><div class="p-card-meta">${p.scheduledDate?'&#128197; '+p.scheduledDate:''}</div></div></div>`).join('')}
+
+// EDITOR
+function renderEd(){const el=document.getElementById('pgEdit');const p=curPostId&&postsCache[curPostId]?postsCache[curPostId]:{};edImgs=[...(p.images||[])];selStatus=p.status||'draft';const st=(p.hashtags||'').split(/\s+/).filter(t=>t.startsWith('#'));
+el.innerHTML=`<div class="ed-sec"><div class="ed-lb">&#128247; Slides</div><div class="dropzone" id="dz" onclick="document.getElementById('fIn').click()"><div class="dz-icon">&#128194;</div><div class="dz-txt">Drop images, <b>browse</b>, or paste</div><input type="file" id="fIn" multiple accept="image/*" style="display:none" onchange="hFiles(this.files)"></div><div class="img-gal" id="imgG">${edImgs.map((img,i)=>imgH(img,i)).join('')}</div></div>
+<div class="ed-sec"><div class="ed-row"><div class="ed-lb" style="flex:1;margin:0">&#127a5; Hook</div><button class="cp-btn" onclick="cpF('hookI',this)">Copy</button></div><textarea class="ed-ta sm" id="hookI" placeholder="Opening hook...">${esc(p.hook||'')}</textarea></div>
+<div class="ed-sec"><div class="ed-row"><div class="ed-lb" style="flex:1;margin:0">&#128172; Caption</div><button class="cp-btn" onclick="cpF('capI',this)">Copy</button></div><textarea class="ed-ta" id="capI" placeholder="Full caption...">${esc(p.caption||'')}</textarea></div>
+<div class="ed-sec"><div class="ed-row"><div class="ed-lb" style="flex:1;margin:0"># Hashtags</div><button class="cp-btn" onclick="cpF('tagI',this)">Copy</button></div><textarea class="ed-ta sm" id="tagI" placeholder="#booktok #darkromance...">${esc(p.hashtags||'')}</textarea><div class="tag-bank">${HTAGS.map(t=>`<div class="tag-c ${st.includes(t)?'active':''}" onclick="togTag(this,'${t}')">${t}</div>`).join('')}</div></div>
+<div class="ed-sec"><button class="cp-all" onclick="cpAll()">&#128203; Copy All</button></div>
+<div class="ed-sec"><div class="ed-lb">&#128197; Schedule</div><div class="sch-row"><input class="ed-in" type="date" id="schD" value="${p.scheduledDate||''}"><input class="ed-in" type="time" id="schT" value="${p.scheduledTime||''}"></div></div>
+<div class="ed-sec"><div class="ed-lb">Status</div><div class="st-pick"><div class="st-opt ${selStatus==='draft'?'active':''}" data-s="draft" onclick="pSt(this,'draft')">Draft</div><div class="st-opt ${selStatus==='ready'?'active':''}" data-s="ready" onclick="pSt(this,'ready')">Ready</div><div class="st-opt ${selStatus==='posted'?'active':''}" data-s="posted" onclick="pSt(this,'posted')">Posted</div></div></div>
+<div class="ed-sec"><div class="col-hd" onclick="togCol(this)"><div class="ed-lb" style="margin:0">&#128221; Notes</div><span class="arr">&#9660;</span></div><div class="col-bd"><textarea class="ed-ta sm" id="notI" placeholder="Internal notes...">${esc(p.notes||'')}</textarea></div></div>
+<div class="ed-sec"><div class="col-hd" onclick="togCol(this)"><div class="ed-lb" style="margin:0">&#128218; Context</div><span class="arr">&#9660;</span></div><div class="col-bd"><textarea class="ed-ta sm" id="ctxI" placeholder="Book title, tropes...">${esc(p.context||'')}</textarea></div></div>
+<div style="height:70px"></div><div class="save-bar">${curPostId?'<button class="sv-btn out" onclick="delPost()">Delete</button>':''}<button class="sv-btn pri" onclick="savePost()">Save</button></div>`;setupDrop();setupPaste()}
+
+function imgH(s,i){return`<div class="img-it"><img src="${s}" alt=""><button class="img-sv" onclick="event.stopPropagation();dlI(${i})" title="Save">&#8595;</button><button class="img-rm" onclick="event.stopPropagation();rmI(${i})" title="Remove">&#10005;</button></div>`}
+function refG(){const g=document.getElementById('imgG');if(g)g.innerHTML=edImgs.map((img,i)=>imgH(img,i)).join('')}
+async function hFiles(fs){for(const f of fs){if(!f.type.startsWith('image/'))continue;edImgs.push(await toDataUrl(f))}refG()}
+function toDataUrl(f){return new Promise(r=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(f)})}
+function rmI(i){edImgs.splice(i,1);refG()}
+function dlI(i){const a=document.createElement('a');a.href=edImgs[i];a.download=`slide-${i+1}.png`;a.click()}
+function setupDrop(){const z=document.getElementById('dz');if(!z)return;z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over')});z.addEventListener('dragleave',()=>z.classList.remove('over'));z.addEventListener('drop',async e=>{e.preventDefault();z.classList.remove('over');await hFiles(e.dataTransfer.files)})}
+function setupPaste(){document.onpaste=async e=>{const items=e.clipboardData?.items;if(!items)return;for(const it of items){if(it.type.startsWith('image/')){e.preventDefault();edImgs.push(await toDataUrl(it.getAsFile()));refG()}}}}
+function togTag(c,t){const inp=document.getElementById('tagI');const cur=inp.value.trim().split(/\s+/).filter(t=>t.startsWith('#'));if(cur.includes(t)){inp.value=cur.filter(x=>x!==t).join(' ');c.classList.remove('active')}else{inp.value=(inp.value.trim()?inp.value.trim()+' ':'')+t;c.classList.add('active')}}
+function pSt(el,s){selStatus=s;document.querySelectorAll('.st-opt').forEach(o=>o.classList.remove('active'));el.classList.add('active')}
+function togCol(h){h.classList.toggle('open');h.nextElementSibling.classList.toggle('open')}
+function cpF(id,btn){const el=document.getElementById(id);if(!el)return;navigator.clipboard.writeText(el.value).then(()=>{btn.classList.add('copied');btn.textContent='Copied!';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='Copy'},1500)})}
+function cpAll(){const h=document.getElementById('hookI')?.value||'',c=document.getElementById('capI')?.value||'',t=document.getElementById('tagI')?.value||'';navigator.clipboard.writeText([h,c,t].filter(Boolean).join('\n\n')).then(()=>toast('Copied hook + caption + hashtags'))}
+async function savePost(){if(!user||!curAuthor)return;const d={hook:document.getElementById('hookI')?.value||'',caption:document.getElementById('capI')?.value||'',hashtags:document.getElementById('tagI')?.value||'',scheduledDate:document.getElementById('schD')?.value||'',scheduledTime:document.getElementById('schT')?.value||'',status:selStatus,notes:document.getElementById('notI')?.value||'',context:document.getElementById('ctxI')?.value||'',images:edImgs,updatedAt:Date.now()};const pid=curPostId||db.ref().push().key;try{await db.ref(`users/${user.uid}/posts/${curAuthor.id}/${pid}`).set(d);postsCache[pid]=d;curPostId=pid;toast('Saved!')}catch(e){toast('Error: '+e.message)}}
+async function delPost(){if(!user||!curAuthor||!curPostId)return;if(!confirm('Delete this post?'))return;try{await db.ref(`users/${user.uid}/posts/${curAuthor.id}/${curPostId}`).remove();delete postsCache[curPostId];toast('Deleted');goBack()}catch(e){toast('Error: '+e.message)}}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 </script>
 </body>
 </html>
