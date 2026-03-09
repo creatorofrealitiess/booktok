@@ -511,10 +511,10 @@ function renderKindle(canvas, groups, scale, fontName, fontSize) {
   const MX = Math.round(20 * (fontSize / 20)) * S;
   const MTW = CW - MX * 2;
   const FS = fontSize * S;
-  const LH = Math.round(FS * 1.45);
-  const PG = Math.round(FS * 0.05);
+  const LH = Math.round(FS * 1.55);
+  const PG = Math.round(FS * 0.15);
   const IND = Math.round(FS * 1.2);
-  const TM = 13 * S;
+  const TM = 10 * S;
   const BM = 10 * S;
   const HLP_T = Math.round(3 * S);
   const HLP_B = Math.round(5 * S);
@@ -1138,13 +1138,13 @@ const baseName=fileArr[0].name.replace(/\.\w+$/,'').replace(/[_\-\s]*(bold[_\-\s
     setChatLoading(true);
 
     // Build context based on mode
-    const excerptText=tupleRaw?parseTupleData(tupleRaw).map(e=>e.text).join(''):'';
+    const excerptText=tupleRaw?parseTupleData(tupleRaw).map(e=>e.text).join(' ').replace(/\s+/g,' ').trim():'';
     let systemCtx;
     if(chatContextMode==="full"&&pdfText){
       const truncBook=pdfText.length>200000?pdfText.substring(0,200000):pdfText;
-      systemCtx=`You are a knowledgeable book assistant. The user is reading a book and has questions about it — answer based on the book text provided. Focus on plot, characters, scenes, motivations, and context. Do NOT give content creation tips, filming advice, or social media suggestions unless explicitly asked.\n\nBook: ${author||"Unknown"}\nVibe they're exploring: ${selectedVibe||customVibe||"N/A"}\n\nCurrent excerpt they're looking at:\n${excerptText}\n\nHook: ${hook}\nContext: ${context}\n\nFull book text:\n${truncBook}`;
+      systemCtx=`You are a knowledgeable book assistant. You have been given the FULL TEXT of this book — you can see everything. Answer the user's questions using the book text provided. Focus on plot, characters, scenes, dialogue, motivations, and context. Do NOT give content creation tips, filming advice, or social media suggestions unless explicitly asked.\n\nIMPORTANT: You have the complete book text below. If the user asks about what happens next, what follows a scene, or what a character says — LOOK IN THE FULL BOOK TEXT to find it. Do NOT say you don't have the text or that it cuts off. The full book is right here.\n\nBook: ${author||"Unknown"}\nVibe they're exploring: ${selectedVibe||customVibe||"N/A"}\n\nThe user is currently looking at this excerpt from the book:\n${excerptText}\n\nHook: ${hook}\nContext: ${context}\n\n=== FULL BOOK TEXT (use this to answer questions) ===\n${truncBook}`;
     } else {
-      systemCtx=`You are a knowledgeable book assistant. The user is reading a book and has questions about it — answer based on the context provided. Focus on plot, characters, scenes, motivations, and context. Do NOT give content creation tips, filming advice, or social media suggestions unless explicitly asked.\n\nBook: ${author||"Unknown"}\nVibe they're exploring: ${selectedVibe||customVibe||"N/A"}\n\nCurrent excerpt they're looking at:\n${excerptText}\n\nHook: ${hook}\nCaption: ${caption}\nContext: ${context}`;
+      systemCtx=`You are a knowledgeable book assistant. The user is reading a book and has questions about it — answer based on the context provided below. You only have the excerpt and surrounding context, not the full book. Focus on plot, characters, scenes, motivations, and context. Do NOT give content creation tips, filming advice, or social media suggestions unless explicitly asked. If the user asks about content beyond what's provided, let them know they can switch to "Full Book" mode for more context.\n\nBook: ${author||"Unknown"}\nVibe they're exploring: ${selectedVibe||customVibe||"N/A"}\n\nCurrent excerpt they're looking at:\n${excerptText}\n\nHook: ${hook}\nCaption: ${caption}\nContext: ${context}`;
     }
 
     // Build conversation history for multi-turn using proper Gemini format
