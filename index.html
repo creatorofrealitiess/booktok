@@ -704,6 +704,47 @@ function splitReactionFromCaption(captionText){
   return{reaction:"",caption:captionText};
 }
 
+function extractDialogueFromChat(text){
+  // Try to extract text between *** or --- or ___ markers
+  const markerPatterns=[
+    /\*{3,}\s*\n([\s\S]*?)\n\s*\*{3,}/,
+    /_{3,}\s*\n([\s\S]*?)\n\s*_{3,}/,
+    /-{3,}\s*\n([\s\S]*?)\n\s*-{3,}/,
+  ];
+  for(const pat of markerPatterns){
+    const match=text.match(pat);
+    if(match&&match[1].trim().length>30){
+      return match[1].trim();
+    }
+  }
+  // Fallback: look for the section that has the most dialogue (lines starting with ")
+  const lines=text.split('\n');
+  let bestStart=-1,bestEnd=-1,bestCount=0;
+  // Sliding window: find the longest consecutive run of lines that are mostly dialogue/narration
+  for(let i=0;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    // Check if this line looks like dialogue or short narration (not analysis)
+    const isDialogue=/^\s*[""\u201C]/.test(lines[i])||/[""\u201D]\s*$/.test(lines[i]);
+    const isShortNarr=lines[i].trim().length<120&&!/^\s*\*/.test(lines[i])&&!/^\s*#/.test(lines[i])&&!lines[i].includes('**');
+    if(isDialogue||isShortNarr){
+      let j=i,dCount=0;
+      while(j<lines.length){
+        const ln=lines[j].trim();
+        if(!ln){j++;continue}
+        const d=/[""\u201C\u201D]/.test(ln);
+        const sn=ln.length<120&&!/^\s*\*/.test(ln)&&!/^\s*#/.test(ln)&&!ln.includes('**');
+        if(d||sn){if(d)dCount++;j++}else break;
+      }
+      if(dCount>bestCount){bestCount=dCount;bestStart=i;bestEnd=j}
+    }
+  }
+  if(bestCount>=2&&bestStart>=0){
+    return lines.slice(bestStart,bestEnd).join('\n').trim();
+  }
+  // Final fallback: return original text
+  return text;
+}
+
 // Auto-fix Gemini tuple issues:
 // 1. Split tuples that contain BOTH dialogue and narration
 // 2. Fix _flow tags: dialogue gets _flow, narrative continuation gets plain tag
@@ -933,6 +974,11 @@ function BookTokApp(){
   const[mysteryMode,setMysteryMode]=useState(false);
   const[detectedTropes,setDetectedTropes]=useState([]);
   const[captionGenLoading,setCaptionGenLoading]=useState(false);
+  // Excerpt Swap
+  const[swapText,setSwapText]=useState("");
+  const[swapOpen,setSwapOpen]=useState(false);
+  const[swapLoading,setSwapLoading]=useState(false);
+  const[swapError,setSwapError]=useState("");
 
   useEffect(()=>{
     Promise.all([dbGetAll(),dbGetCats(),dbGetBooks()]).then(([ph,cats,bks])=>{
@@ -1121,7 +1167,7 @@ const baseName=fileArr[0].name.replace(/\.\w+$/,'').replace(/[_\-\s]*(bold[_\-\s
   const doRender=useCallback(()=>{const entries=parseTupleData(tupleRaw);if(!entries.length){setError("No valid tuple data.");return}document.fonts.load(`500 ${fontSize}px "${fontName}"`).then(()=>{renderKindle(canvasRef.current,buildGroups(entries),2,fontName,fontSize);setRendered(true)})},[tupleRaw,fontName,fontSize]);
   const doCopy=useCallback(async()=>{try{const blob=await new Promise(r=>canvasRef.current.toBlob(r,'image/png'));await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);setCopied(true);setTimeout(()=>setCopied(false),2000)}catch(e){console.error(e)}},[]);
   const copyField=useCallback(async(text,field)=>{try{await navigator.clipboard.writeText(text);setCopiedField(field);setTimeout(()=>setCopiedField(""),1500)}catch(e){console.error(e)}},[]);
-  const resetAll=useCallback(()=>{setStep("upload");setActiveTab("generate");setWizardStep(1);setPdfFile(null);setPdfText("");setSelectedVibe("");setCustomVibe("");setHook("");setCaption("");setReaction("");setContext("");setTupleRaw("");setRendered(false);setAuthor("");setError("");setSelectedPhotos([]);setAiPickedPhotos([]);setSelectedBook(null);setChatMessages([]);setChatOpen(false);setHookVariants([]);setHookForgeOpen(false);setHookForgeError("");setDetectedTropes([]);setMysteryMode(false);window._pinterestSearches=null},[]);
+  const resetAll=useCallback(()=>{setStep("upload");setActiveTab("generate");setWizardStep(1);setPdfFile(null);setPdfText("");setSelectedVibe("");setCustomVibe("");setHook("");setCaption("");setReaction("");setContext("");setTupleRaw("");setRendered(false);setAuthor("");setError("");setSelectedPhotos([]);setAiPickedPhotos([]);setSelectedBook(null);setChatMessages([]);setChatOpen(false);setHookVariants([]);setHookForgeOpen(false);setHookForgeError("");setDetectedTropes([]);setMysteryMode(false);setSwapText("");setSwapOpen(false);setSwapError("");window._pinterestSearches=null},[]);
 
   // Auto-scroll chat to bottom
   useEffect(()=>{if(chatEndRef.current)chatEndRef.current.scrollIntoView({behavior:"smooth"})},[chatMessages,chatLoading]);
@@ -1318,6 +1364,56 @@ No markdown, no backticks.
       }
     }
   },[mysteryMode]);
+
+  // === EXCERPT SWAP: Format raw text into tuples and regenerate hook/reaction/caption ===
+  const formatAndRegenerate=useCallback(async()=>{
+    if(!anthropicKey.trim()){setSwapError("Add your Anthropic API key on the Generate tab.");return}
+    if(!swapText.trim()){setSwapError("Paste or edit the excerpt text first.");return}
+    setSwapLoading(true);setSwapError("");
+    try{
+      // Step 1: Format tuples
+      const sonRes=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":anthropicKey.trim(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:claudeModel,max_tokens:4096,messages:[{role:"user",content:`${SONNET_TUPLE_PROMPT}\n\nHere is the excerpt to format:\n\n${swapText.trim()}`}]})});
+      if(!sonRes.ok){const e=await sonRes.json().catch(()=>({}));throw new Error("Tuple formatting: "+(e?.error?.message||`API ${sonRes.status}`))}
+      const sonData=await sonRes.json();const sonText=sonData?.content?.[0]?.text;if(!sonText)throw new Error("Tuple formatting returned empty");
+      const cleanTuple=sonText.trim().replace(/^```(?:python)?\s*/i,'').replace(/\s*```\s*$/,'').trim();
+      const fixedTuple=autoFixFlowTags(cleanTuple);
+      setTupleRaw(fixedTuple);
+      if(fixedTuple)setTimeout(()=>autoRender(fixedTuple),300);
+
+      // Step 2: Regenerate hook, reaction, caption
+      const excerptPlain=swapText.trim().substring(0,800);
+      const regenRes=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":anthropicKey.trim(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:claudeModel,max_tokens:1024,messages:[{role:"user",content:`You are a BookTok strategist. Based on this new excerpt from a romance book, generate post assets.
+
+Book: ${author||"Unknown"}
+Scene context: ${context}
+New excerpt: ${excerptPlain}
+
+Return ONLY a JSON object with:
+1. "hook" - ONE punchy hook sentence for the first slide, third person, max 10-15 words, ending with an em dash —. Make it trigger an emotion or name a trope, not summarize plot.
+2. "reaction" - a short emotional reaction (3-6 words, no emoji). Like a real reader's gut reaction. Examples: "The way he chose her", "I am not okay right now", "This man will ruin me"
+3. "tropes" - array of trope strings in lowercase
+4. "pinterest_searches" - array of 3-4 Pinterest search strings for couple/character photos (3-5 words each, broad aesthetic terms)
+
+No markdown, no backticks.
+{"hook":"...","reaction":"...","tropes":["..."],"pinterest_searches":["..."]}`}]})});
+      if(!regenRes.ok){const e=await regenRes.json().catch(()=>({}));throw new Error("Regenerate: "+(e?.error?.message||`API ${regenRes.status}`))}
+      const regenData=await regenRes.json();const regenTxt=(regenData?.content?.[0]?.text||"").trim();
+      const regenClean=regenTxt.replace(/^```(?:json)?\s*/i,'').replace(/\s*```\s*$/,'').trim();
+      const result=JSON.parse(regenClean);
+      if(result.hook)setHook(result.hook);
+      if(result.reaction)setReaction(result.reaction);
+      if(result.tropes){
+        setDetectedTropes(result.tropes);
+        const bookLine=author||"[Book Title] by [Author]";
+        const tropeStr=result.tropes.map(t=>'— '+t).join('\n');
+        const newCaption=mysteryMode?`${tropeStr}`:`📚 : ${bookLine}\n${tropeStr}`;
+        setCaption(newCaption);
+      }
+      if(result.pinterest_searches){window._pinterestSearches=result.pinterest_searches}
+      setSwapOpen(false);
+    }catch(e){setSwapError(e.message)}
+    setSwapLoading(false);
+  },[anthropicKey,claudeModel,swapText,author,context,mysteryMode,autoRender]);
 
   const tabStyle=(t)=>({padding:"8px 18px",fontSize:"12px",fontWeight:600,cursor:"pointer",border:"none",borderBottom:activeTab===t?"2px solid #e85d3a":"2px solid transparent",backgroundColor:"transparent",color:activeTab===t?"#1a1815":"#a09a93",fontFamily:UI_FONT,transition:"all 0.15s",letterSpacing:"0.3px"});
   const catTabStyle=(id)=>({padding:"6px 14px",fontSize:"12px",fontWeight:500,cursor:"pointer",border:"1px solid",borderColor:activeCatId===id?"#e85d3a":"#e8e6e1",borderRadius:"20px",backgroundColor:activeCatId===id?"#fef0ec":"transparent",color:activeCatId===id?"#e85d3a":"#a09a93",fontFamily:UI_FONT,transition:"all 0.15s",whiteSpace:"nowrap"});
@@ -1541,6 +1637,31 @@ No markdown, no backticks.
           <div style={{width:"430px",minWidth:"390px",padding:"18px",borderRight:"1px solid #e8e6e1",overflowY:"auto",display:"flex",flexDirection:"column",gap:"14px"}}>
             {getProject(author)&&<div style={{display:"flex",alignItems:"center",gap:"8px",padding:"8px 12px",backgroundColor:"#fff",borderRadius:"6px",border:"1px solid #e8e6e1"}}><span style={{fontSize:"10px",fontWeight:700,letterSpacing:"1.5px",padding:"3px 8px",borderRadius:"4px",backgroundColor:getProject(author)==="RE"?"#fef0ec":getProject(author)==="DK"?"#eef0fe":"#fdf0fa",color:getProject(author)==="RE"?"#e85d3a":getProject(author)==="DK"?"#6366f1":"#d946a8",fontFamily:"'DM Sans', sans-serif"}}>{getProject(author)}</span><span style={{fontSize:"11px",color:"#a09a93",fontFamily:"'DM Sans', sans-serif"}}>Tasks {getProject(author)}</span></div>}
 
+            {/* === EXCERPT SWAP === */}
+            <div style={{...ST.card,border:swapOpen?"1px solid #e85d3a":"1px solid #e8e6e1",transition:"border-color 0.2s"}}>
+              <div onClick={()=>setSwapOpen(!swapOpen)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",userSelect:"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                  <span style={{fontSize:"13px"}}>🔄</span>
+                  <label style={{...ST.label,marginBottom:0,cursor:"pointer"}}>Swap Excerpt</label>
+                  {swapText&&!swapOpen&&<span style={{fontSize:"9px",padding:"1px 6px",borderRadius:"3px",backgroundColor:"#fef0ec",color:"#e85d3a",fontFamily:"'DM Sans', sans-serif",border:"1px solid #e85d3a"}}>Text ready</span>}
+                </div>
+                <span style={{color:"#a09a93",fontSize:"12px",transition:"transform 0.2s",transform:swapOpen?"rotate(180deg)":"rotate(0deg)"}}>▼</span>
+              </div>
+              {swapOpen&&(
+                <div style={{marginTop:"10px",display:"flex",flexDirection:"column",gap:"10px"}}>
+                  <div style={{fontSize:"10px",color:"#a09a93",fontFamily:"'DM Sans', sans-serif"}}>Paste or edit an excerpt below, then hit Format & Regenerate. This will format the tuples and generate a new hook, reaction, and caption.</div>
+                  <textarea value={swapText} onChange={e=>setSwapText(e.target.value)} placeholder="Paste dialogue/excerpt text here..." spellCheck={false} style={{...ST.input,height:"180px",resize:"vertical",fontSize:"12px",lineHeight:"1.6"}} />
+                  {swapError&&<div style={{fontSize:"11px",color:"#dc3545",fontFamily:"'DM Sans', sans-serif"}}>{swapError}</div>}
+                  <div style={{display:"flex",gap:"8px"}}>
+                    <button onClick={formatAndRegenerate} disabled={swapLoading||!swapText.trim()} style={{...ST.btn,flex:1,padding:"12px",backgroundColor:swapLoading||!swapText.trim()?"#f0eeea":"#e85d3a",color:swapLoading||!swapText.trim()?"#a09a93":"#fff",fontSize:"13px",borderRadius:"8px"}}>
+                      {swapLoading?(<span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}><span style={{display:"inline-block",width:"12px",height:"12px",border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 0.8s linear infinite"}} />Formatting & regenerating...</span>):"Format & Regenerate"}
+                    </button>
+                    <button onClick={()=>{setSwapText("");setSwapError("")}} style={{...ST.btn,padding:"12px 16px",backgroundColor:"transparent",color:"#a09a93",border:"1px solid #e8e6e1",fontSize:"12px",borderRadius:"8px"}}>Clear</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{borderTop:"1px solid #e8e6e1",margin:"4px 0"}} />
             <div><label style={ST.label}>Font</label><select value={fontName} onChange={e=>setFontName(e.target.value)} style={{...ST.input,cursor:"pointer",appearance:"auto"}}>{FONT_OPTIONS.map(f=><option key={f} value={f}>{f}</option>)}{customFontName&&<option value={customFontName}>{customFontName}</option>}</select></div>
             <div>
@@ -1737,10 +1858,13 @@ No markdown, no backticks.
                   </div>
                 )}
                 {chatMessages.map((m,i)=>(
-                  <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:"8px"}}>
+                  <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:"8px",flexDirection:"column",alignItems:m.role==="user"?"flex-end":"flex-start"}}>
                     <div style={{maxWidth:"75%",padding:"10px 14px",borderRadius:m.role==="user"?"12px 12px 2px 12px":"12px 12px 12px 2px",backgroundColor:m.role==="user"?"#e85d3a":"#fff",border:`1px solid ${m.isError?"#f5c6cb":m.role==="user"?"#e85d3a":"#e8e6e1"}`,color:m.isError?"#dc3545":m.role==="user"?"#fff":"#1a1815",fontSize:"13px",lineHeight:"1.5",fontFamily:UI_FONT,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
                       {m.text}
                     </div>
+                    {m.role==="assistant"&&!m.isError&&(
+                      <button onClick={()=>{setSwapText(extractDialogueFromChat(m.text));setSwapOpen(true);setActiveTab("excerpt")}} style={{...ST.btn,padding:"3px 10px",fontSize:"10px",backgroundColor:"transparent",color:"#a09a93",border:"1px solid #e8e6e1",borderRadius:"12px",marginTop:"-4px",transition:"all 0.15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor='#e85d3a';e.currentTarget.style.color='#e85d3a'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#e8e6e1';e.currentTarget.style.color='#a09a93'}}>Use This Excerpt →</button>
+                    )}
                   </div>
                 ))}
                 {chatLoading&&(
