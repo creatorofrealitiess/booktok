@@ -1119,21 +1119,42 @@ const baseName=fileArr[0].name.replace(/\.\w+$/,'').replace(/[_\-\s]*(bold[_\-\s
 
   const useHybrid = !!anthropicKey.trim();
 
+  // Retry helper for Gemini API calls — retries up to 3 times with delay
+  const geminiRetryFetch=useCallback(async(url,options,label)=>{
+    const MAX_RETRIES=3;const DELAY_MS=4000;
+    for(let attempt=1;attempt<=MAX_RETRIES;attempt++){
+      setLoadingStatus(attempt>1?`${label} (retry ${attempt}/${MAX_RETRIES})...`:`${label}...`);
+      const res=await fetch(url,options);
+      if(res.status===429&&attempt<MAX_RETRIES){
+        setLoadingStatus(`Rate limited — waiting ${DELAY_MS/1000}s before retry ${attempt+1}...`);
+        await new Promise(r=>setTimeout(r,DELAY_MS));continue
+      }
+      if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error("Gemini: "+(e?.error?.message||`API ${res.status}`))}
+      const data=await res.json();const text=data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(!text&&attempt<MAX_RETRIES){
+        setLoadingStatus(`Empty response — retrying (${attempt+1}/${MAX_RETRIES})...`);
+        await new Promise(r=>setTimeout(r,DELAY_MS));continue
+      }
+      if(!text)throw new Error("Gemini returned empty response after "+MAX_RETRIES+" attempts");
+      return text
+    }
+    throw new Error("Gemini failed after "+MAX_RETRIES+" attempts")
+  },[]);
+
   const callGemini=useCallback(async()=>{
     if(!apiKey.trim()){setError("Please enter your Gemini API key.");return}
     if(!pdfText.trim()){setError("No book selected or PDF text extracted.");return}
     const vibe=customVibe.trim()||selectedVibe;if(!vibe){setError("Please select or enter a vibe.");return}
     setError("");setLoading(true);
     const truncated=pdfText.length>300000?pdfText.substring(0,300000):pdfText;
+    const geminiUrl=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+    const geminiOpts=(prompt)=>({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.9,maxOutputTokens:8192}})});
 
     if(useHybrid){
       // === HYBRID MODE: Gemini finds scene → Sonnet formats tuples ===
       try{
-        // Step 1: Gemini finds the scene
-        setLoadingStatus("Gemini: Finding scene...");
-        const gemRes=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:`${GEMINI_SCENE_PROMPT}\n\nVibe/Trope to find: ${vibe}\n\nBook text:\n${truncated}`}]}],generationConfig:{temperature:0.9,maxOutputTokens:8192}})});
-        if(!gemRes.ok){const e=await gemRes.json().catch(()=>({}));throw new Error("Gemini: "+(e?.error?.message||`API ${gemRes.status}`))}
-        const gemData=await gemRes.json();const gemText=gemData?.candidates?.[0]?.content?.parts?.[0]?.text;if(!gemText)throw new Error("Gemini returned empty response");
+        // Step 1: Gemini finds the scene (with retry)
+        const gemText=await geminiRetryFetch(geminiUrl,geminiOpts(`${GEMINI_SCENE_PROMPT}\n\nVibe/Trope to find: ${vibe}\n\nBook text:\n${truncated}`),"Gemini: Finding scene");
         const scene=parseGeminiSceneResponse(gemText);
         if(!scene.excerpt)throw new Error("Gemini didn't return an excerpt. Try again.");
         setHook(scene.hook);const _sc=splitReactionFromCaption(scene.caption);setReaction(_sc.reaction);setCaption(_sc.caption);setContext(scene.context);
@@ -1154,11 +1175,9 @@ const baseName=fileArr[0].name.replace(/\.\w+$/,'').replace(/[_\-\s]*(bold[_\-\s
       }catch(e){setError(e.message);setLoading(false);setLoadingStatus("")}
 
     } else {
-      // === GEMINI-ONLY MODE (original behavior) ===
-      try{setLoadingStatus("Sending to Gemini...");
-        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:`${GEMINI_SYSTEM_PROMPT}\n\nVibe/Trope to find: ${vibe}\n\nBook text:\n${truncated}`}]}],generationConfig:{temperature:0.9,maxOutputTokens:8192}})});
-        if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`API ${res.status}`)}
-        const data=await res.json();const text=data?.candidates?.[0]?.content?.parts?.[0]?.text;if(!text)throw new Error("Empty response");
+      // === GEMINI-ONLY MODE (original behavior, with retry) ===
+      try{
+        const text=await geminiRetryFetch(geminiUrl,geminiOpts(`${GEMINI_SYSTEM_PROMPT}\n\nVibe/Trope to find: ${vibe}\n\nBook text:\n${truncated}`),"Sending to Gemini");
         const parsed=parseGeminiResponse(text);const fixedTuple=parsed.tupleRaw?autoFixFlowTags(parsed.tupleRaw):parsed.tupleRaw;setHook(parsed.hook);const _pc=splitReactionFromCaption(parsed.caption);setReaction(_pc.reaction);setCaption(_pc.caption);setContext(parsed.context);setTupleRaw(fixedTuple);
         const bm=parsed.caption.match(/\uD83D\uDCDA\s*:?\s*(.+?)(?:\n|$)/);if(bm)setAuthor(bm[1].trim());else if(selectedBook)setAuthor(`${selectedBook.title} by ${selectedBook.author}`);
         setStep("results");setActiveTab("excerpt");setLoading(false);setLoadingStatus("");
@@ -1167,7 +1186,7 @@ const baseName=fileArr[0].name.replace(/\.\w+$/,'').replace(/[_\-\s]*(bold[_\-\s
         generateBookSummary(truncated);
       }catch(e){setError("Gemini error: "+e.message);setLoading(false);setLoadingStatus("")}
     }
-  },[apiKey,anthropicKey,claudeModel,model,pdfText,selectedVibe,customVibe,selectedBook,useHybrid]);
+  },[apiKey,anthropicKey,claudeModel,model,pdfText,selectedVibe,customVibe,selectedBook,useHybrid,geminiRetryFetch]);
 
   // Generate a character/relationship summary from Gemini for Hook Forge context
   const generateBookSummary=useCallback(async(bookText)=>{
